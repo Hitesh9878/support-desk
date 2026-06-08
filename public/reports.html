@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports - TradeMAV</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Restore theme before render to prevent flash
+    (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+  </script>
+</head>
+<body class="app">
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>TradeMAV</h2>
+      </div>
+      <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+      <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
+      <a href="/reports.html" class="nav-item active"><span class="icon">📈</span><span class="label">Reports</span></a>
+      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+    </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1>Reports & Analytics</h1>
+        </div>
+        <div class="header-right">
+          <button class="btn btn-secondary" id="refreshReportsBtn">🔄 Refresh</button>
+          <button class="btn btn-secondary" id="exportBtn">📥 Export CSV</button>
+        </div>
+      </header>
+
+      <!-- Reports Content -->
+      <!-- Scope banner (shown for agents) -->
+      <div id="reportScopeBanner" style="display:none;background:#eff6ff;border:1.5px solid #bfdbfe;
+        color:#1e40af;font-size:13px;font-weight:500;padding:11px 20px;margin:14px 24px 0;
+        border-radius:8px;align-items:center;gap:8px;">
+      </div>
+      <div class="reports-container">
+        <!-- Ticket Statistics -->
+        <section class="report-section">
+          <h2>Ticket Statistics</h2>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Tickets</div>
+              <div class="stat-value" id="totalTickets">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Open Tickets</div>
+              <div class="stat-value" id="openTickets">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Average Resolution Time</div>
+              <div class="stat-value" id="avgResolutionTime">0h</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">SLA Compliance</div>
+              <div class="stat-value" id="slaCompliance">0%</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Priority Distribution -->
+        <section class="report-section">
+          <h2>Tickets by Priority</h2>
+          <div class="chart-container">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Visual</th>
+                </tr>
+              </thead>
+              <tbody id="priorityTable">
+                <tr><td colspan="4" class="loading">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Status Distribution -->
+        <section class="report-section">
+          <h2>Tickets by Status</h2>
+          <div class="chart-container">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Count</th>
+                  <th>Percentage</th>
+                  <th>Visual</th>
+                </tr>
+              </thead>
+              <tbody id="statusTable">
+                <tr><td colspan="4" class="loading">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Agent Performance -->
+        <section class="report-section">
+          <h2>Agent Performance</h2>
+          <div class="chart-container">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Agent</th>
+                  <th>Assigned Tickets</th>
+                  <th>Resolved</th>
+                  <th>Avg Response Time</th>
+                </tr>
+              </thead>
+              <tbody id="agentTable">
+                <tr><td colspan="4" class="loading">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Customer Satisfaction -->
+        <section class="report-section">
+          <h2>Top Customers</h2>
+          <div class="chart-container">
+            <table class="report-table">
+              <thead>
+                <tr>
+                  <th>Customer Name</th>
+                  <th>Total Tickets</th>
+                  <th>Active Tickets</th>
+                  <th>Resolved</th>
+                </tr>
+              </thead>
+              <tbody id="customersTable">
+                <tr><td colspan="4" class="loading">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Recent Activity -->
+        <section class="report-section">
+          <h2>Recent Activity (Last 30 Days)</h2>
+          <div class="activity-chart">
+            <canvas id="activityChart" style="display: none;"></canvas>
+            <div id="activityText" class="activity-text">
+              <p>Activity data loading...</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="/js/api.js"></script>
+<script src="/js/profile-settings.js"></script>
+  <script src="/js/reports.js"></script>
+</body>
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - TradeMAV</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .profile-layout{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px 22px;align-items:start}
+    .profile-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;box-shadow:var(--card-shadow)}
+    .profile-cover{height:90px;background:linear-gradient(135deg,#1E3A8A,#4F46E5,#7C3AED)}
+    .profile-avatar-wrap{padding:0 24px 20px;margin-top:-38px;display:flex;flex-direction:column;align-items:center;text-align:center}
+    .profile-avatar{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--indigo-500));border:3px solid var(--surface);display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;flex-shrink:0;position:relative;cursor:pointer;overflow:hidden;background-size:cover;background-position:center}
+    .avatar-edit{position:absolute;bottom:0;right:0;width:22px;height:22px;background:var(--primary);border:2px solid var(--surface);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px}
+    .profile-name{font-size:18px;font-weight:700;color:var(--text-primary);margin:10px 0 3px}
+    .profile-role{font-size:12px;font-weight:600;background:var(--indigo-100);color:var(--indigo-700);padding:3px 10px;border-radius:var(--radius-full);display:inline-block}
+    .profile-email{font-size:12.5px;color:var(--text-secondary);margin-top:6px}
+    .profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border);margin-top:16px}
+    .profile-stat{text-align:center;padding:14px 8px;border-right:1px solid var(--border)}
+    .profile-stat:last-child{border-right:none}
+    .profile-stat-val{font-size:20px;font-weight:800;color:var(--text-primary);line-height:1}
+    .profile-stat-lbl{font-size:10.5px;color:var(--text-secondary);font-weight:500;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+
+    .info-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--card-shadow);overflow:hidden;margin-bottom:18px}
+    .info-section-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--gray-50);display:flex;justify-content:space-between;align-items:center}
+    .info-section-header h3{font-size:14px;font-weight:700;color:var(--text-primary);margin:0}
+    .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+    .info-field{padding:14px 20px;border-bottom:1px solid var(--border-light)}
+    .info-field:nth-last-child(-n+2){border-bottom:none}
+    .info-field.full{grid-column:1/-1}
+    .info-field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:4px}
+    .info-field .field-val{font-size:13.5px;color:var(--text-primary);font-weight:500}
+    .info-field .field-val.muted{color:var(--text-secondary)}
+    .info-field input,.info-field select,.info-field textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13.5px;font-family:inherit;color:var(--text-primary);background:var(--surface);transition:all var(--t)}
+    .info-field input:focus,.info-field select:focus,.info-field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(11,95,255,.1)}
+    .info-field input:read-only{background:var(--gray-50);color:var(--text-secondary);cursor:not-allowed}
+    .info-field textarea{min-height:70px;resize:vertical}
+
+    .edit-actions{padding:14px 20px;background:var(--gray-50);border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+
+    .account-meta-item{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border-light)}
+    .account-meta-item:last-child{border-bottom:none}
+    .account-meta-icon{width:36px;height:36px;border-radius:var(--radius-md);background:var(--primary-50);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .account-meta-label{font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+    .account-meta-value{font-size:13.5px;color:var(--text-primary);font-weight:500;margin-top:2px}
+
+    .badge-active{background:var(--success-bg);color:var(--success-text);padding:2px 9px;border-radius:var(--radius-full);font-size:11.5px;font-weight:700}
+    .pending-notice{background:var(--warning-bg);border:1px solid var(--warning-border);color:var(--warning-dark);border-radius:var(--radius-md);padding:10px 14px;font-size:13px;margin:12px 20px;line-height:1.5}
+
+    @media(max-width:900px){.profile-layout{grid-template-columns:1fr}}
+    @media(max-width:600px){.info-grid{grid-template-columns:1fr}.info-field:last-child{border-bottom:none}}
+  </style>
+  <script>
+    // Restore theme before render to prevent flash
+    (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+  </script>
+</head>
+<body class="app">
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">🎯</div>
+      <h2>TradeMAV</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+      <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
+      <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
+      <a href="/profile.html" class="nav-item active"><span class="icon">👤</span><span class="label">Profile</span></a>
+      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="header">
+      <div class="header-left"><h1>My Profile</h1></div>
+      <div class="header-right">
+        <button class="btn btn-primary" id="saveProfileBtn">💾 Save Changes</button>
+        <div class="user-menu">
+          <button class="user-btn" id="userBtn">
+            <div class="avatar-header" id="headerAvatar">
+              <img id="headerAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+              <span id="userInitials">U</span>
+            </div>
+            <span id="userName">User</span>
+          </button>
+                    <div class="dropdown" id="userDropdown">
+            <a href="/profile.html">Profile</a>
+            <a href="/settings.html">Settings</a>
+            <a href="#" id="logoutBtn">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="profile-layout" id="profileContent">
+      <!-- Left column -->
+      <div>
+        <!-- Avatar card -->
+        <div class="profile-card" style="margin-bottom:18px;">
+          <div class="profile-cover"></div>
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profileAvatarEl" title="Click to change photo">
+              <span id="profileAvatarInitials">U</span>
+              <div class="avatar-edit">✏️</div>
+            </div>
+            <div class="profile-name" id="profileDisplayName">Loading…</div>
+            <span class="profile-role" id="profileDisplayRole">Agent</span>
+            <div class="profile-email" id="profileDisplayEmail">—</div>
+          </div>
+          <div class="profile-stats">
+            <div class="profile-stat">
+              <div class="profile-stat-val" id="statAssigned">—</div>
+              <div class="profile-stat-lbl">Assigned</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-val" id="statResolved">—</div>
+              <div class="profile-stat-lbl">Resolved</div>
+            </div>
+            <div class="profile-stat">
+              <div class="profile-stat-val" id="statOpen">—</div>
+              <div class="profile-stat-lbl">Open</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Account information (read-only) -->
+        <div class="info-section">
+          <div class="info-section-header"><h3>Account Information</h3></div>
+          <div class="account-meta-item">
+            <div class="account-meta-icon">🆔</div>
+            <div>
+              <div class="account-meta-label">User ID</div>
+              <div class="account-meta-value" id="metaUserId" style="font-family:monospace;font-size:12px;">—</div>
+            </div>
+          </div>
+          <div class="account-meta-item">
+            <div class="account-meta-icon">🛡️</div>
+            <div>
+              <div class="account-meta-label">Role</div>
+              <div class="account-meta-value" id="metaRole">—</div>
+            </div>
+          </div>
+          <div class="account-meta-item">
+            <div class="account-meta-icon">✅</div>
+            <div>
+              <div class="account-meta-label">Account Status</div>
+              <div class="account-meta-value"><span class="badge-active" id="metaStatus">Active</span></div>
+            </div>
+          </div>
+          <div class="account-meta-item">
+            <div class="account-meta-icon">📅</div>
+            <div>
+              <div class="account-meta-label">Account Created</div>
+              <div class="account-meta-value" id="metaCreated">—</div>
+            </div>
+          </div>
+          <div class="account-meta-item">
+            <div class="account-meta-icon">🕐</div>
+            <div>
+              <div class="account-meta-label">Joined At</div>
+              <div class="account-meta-value" id="metaJoined">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div>
+        <div id="pendingChangesBanner" class="pending-notice" style="display:none;">
+          ⏳ You have profile changes pending admin approval. They will be applied once an admin reviews them.
+        </div>
+
+        <!-- Personal Details -->
+        <div class="info-section">
+          <div class="info-section-header">
+            <h3>Personal Details</h3>
+            <span style="font-size:12px;color:var(--text-secondary);">Changes saved immediately</span>
+          </div>
+          <div class="info-grid">
+            <div class="info-field">
+              <label>Full Name *</label>
+              <input type="text" id="fieldName" placeholder="Your full name">
+            </div>
+            <div class="info-field">
+              <label>Email Address</label>
+              <input type="email" id="fieldEmail" readonly placeholder="your@email.com">
+            </div>
+            <div class="info-field">
+              <label>Phone Number</label>
+              <input type="tel" id="fieldPhone" placeholder="+1 (555) 000-0000">
+            </div>
+            <div class="info-field">
+              <label>Designation / Title</label>
+              <input type="text" id="fieldDesignation" placeholder="e.g. Senior Support Agent">
+            </div>
+            <div class="info-field">
+              <label>Department</label>
+              <input type="text" id="fieldDepartment" placeholder="e.g. Customer Success">
+            </div>
+            <div class="info-field">
+              <label>Employee ID <span style="font-weight:400;color:var(--text-muted)">(optional)</span></label>
+              <input type="text" id="fieldEmployeeId" placeholder="EMP-001">
+            </div>
+            <div class="info-field full">
+              <label>Bio / About</label>
+              <textarea id="fieldBio" placeholder="A short description about yourself…"></textarea>
+            </div>
+          </div>
+          <div class="edit-actions">
+            <div id="profileSaveMsg" style="font-size:13px;align-self:center;display:none;"></div>
+            <button class="btn btn-secondary" id="resetProfileBtn">Reset</button>
+            <button class="btn btn-primary" id="savePersonalBtn">Save Personal Details</button>
+          </div>
+        </div>
+
+        <!-- Agent Performance -->
+        <div class="info-section" id="performanceSection">
+          <div class="info-section-header"><h3>Agent Performance</h3></div>
+          <div class="info-grid">
+            <div class="info-field">
+              <label>Assigned Tickets</label>
+              <div class="field-val" id="perfAssigned">—</div>
+            </div>
+            <div class="info-field">
+              <label>Resolved Tickets</label>
+              <div class="field-val" id="perfResolved">—</div>
+            </div>
+            <div class="info-field">
+              <label>Open Tickets</label>
+              <div class="field-val" id="perfOpen">—</div>
+            </div>
+            <div class="info-field">
+              <label>Avg Response Time</label>
+              <div class="field-val" id="perfAvgTime">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/profile-settings.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getAuthToken()) { window.location.href = '/login.html'; return; }
+  initProfile();
+
+  document.getElementById('logoutBtn')?.addEventListener('click', e => {
+    e.preventDefault(); clearAuthToken(); localStorage.removeItem('user');
+    window.location.href = '/login.html';
+  });
+  document.getElementById('saveProfileBtn')?.addEventListener('click', savePersonalDetails);
+  document.getElementById('savePersonalBtn')?.addEventListener('click', savePersonalDetails);
+  document.getElementById('resetProfileBtn')?.addEventListener('click', () => populateProfileForm(window._profileUser));
+});
+</script>
+</body>
+</html>

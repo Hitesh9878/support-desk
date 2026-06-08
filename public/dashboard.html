@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - TradeMAV</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Role-scoped stat grid ── */
+    .stats-dual { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .stat-group { background: var(--bg-primary); border: 1.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--card-shadow); }
+    .stat-group-title {
+      font-size: 11px; font-weight: 700; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: .08em; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .stat-group-title .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-mine  { background: var(--indigo-500); }
+    .dot-total { background: var(--success); }
+    .mini-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .mini-stat { text-align: center; }
+    .mini-stat-value { font-size: 28px; font-weight: 700; letter-spacing: -1px; color: var(--text-primary); }
+    .mini-stat-label { font-size: 11px; color: var(--text-secondary); font-weight: 500; margin-top: 2px; }
+    /* ── Delete button on ticket rows ── */
+    .btn-delete-ticket {
+      background: var(--danger-light); color: var(--danger); border: 1px solid #fca5a5;
+      padding: 3px 9px; border-radius: var(--radius-sm); font-size: 11.5px; font-weight: 600;
+      cursor: pointer; transition: all .15s; display: none; /* shown only for admin via JS */
+    }
+    .btn-delete-ticket:hover { background: #fecaca; }
+    .ticket-row-actions { display: flex; gap: 6px; align-items: center; }
+    /* ── Delete confirm modal ── */
+    .confirm-modal { max-width: 380px; }
+    .confirm-body { padding: 24px; text-align: center; }
+    .confirm-body p { color: var(--text-secondary); font-size: 14px; margin: 8px 0 20px; }
+    .confirm-body strong { color: var(--text-primary); }
+    .confirm-actions { display: flex; gap: 10px; justify-content: center; }
+  </style>
+  <script>
+    // Restore theme before render to prevent flash
+    (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+  </script>
+</head>
+<body class="app">
+<div class="app-container">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">🎯</div>
+      <h2>TradeMAV</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item active"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+      <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
+      <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
+      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="header">
+      <div class="header-left"><h1>Dashboard</h1></div>
+      <div class="header-right">
+        <button class="btn btn-secondary" id="refreshDashboardBtn">🔄 Refresh</button>
+        <button class="btn btn-primary" id="inviteAgentHeaderBtn" style="display:none;">✉️ Invite Agent</button>
+        <button class="status-selector" id="statusBtn">
+          <span class="status-dot" id="statusDot"></span>
+          <span id="statusLabel">Active</span>
+        </button>
+        <div class="user-menu">
+          <button class="user-btn" id="userBtn">
+            <div class="avatar-header" id="headerAvatar">
+              <img id="headerAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
+              <span id="userInitials">U</span>
+            </div>
+            <span id="userName">User</span>
+          </button>
+                    <div class="dropdown" id="userDropdown">
+            <a href="/profile.html">Profile</a>
+            <a href="/settings.html">Settings</a>
+            <a href="#" id="logoutBtn">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard-grid">
+
+      <!-- ── Dual stat panels ── -->
+      <section class="stats-section" style="grid-column:1/-1;">
+        <div class="stats-dual">
+          <!-- My Tickets -->
+          <div class="stat-group">
+            <div class="stat-group-title"><span class="dot dot-mine"></span> My Tickets</div>
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <div class="mini-stat-value" id="myOpen">—</div>
+                <div class="mini-stat-label">Open</div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-value" id="myInProgress">—</div>
+                <div class="mini-stat-label">In Progress</div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-value" id="myResolved">—</div>
+                <div class="mini-stat-label">Resolved</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Total Tickets (all) -->
+          <div class="stat-group" id="totalStatGroup">
+            <div class="stat-group-title"><span class="dot dot-total"></span> Total Open Tickets</div>
+            <div class="mini-stats">
+              <div class="mini-stat">
+                <div class="mini-stat-value" id="totalOpen">—</div>
+                <div class="mini-stat-label">Open</div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-value" id="totalInProgress">—</div>
+                <div class="mini-stat-label">In Progress</div>
+              </div>
+              <div class="mini-stat">
+                <div class="mini-stat-value" id="totalResolved">—</div>
+                <div class="mini-stat-label">Resolved</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom row stats -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-icon">🎫</span>
+            <div class="stat-label">All Tickets</div>
+            <div class="stat-value" id="allTickets">0</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">👥</span>
+            <div class="stat-label">Customers</div>
+            <div class="stat-value" id="totalCustomers">0</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">🔓</span>
+            <div class="stat-label">Unassigned</div>
+            <div class="stat-value" id="unassignedCount">0</div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon">⚡</span>
+            <div class="stat-label">Urgent</div>
+            <div class="stat-value" id="urgentCount">0</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Recent Tickets -->
+      <section class="recent-tickets" style="grid-column:1/-1;">
+        <div class="section-header">
+          <h2>Recent Tickets</h2>
+          <a href="/tickets.html" class="link">View All →</a>
+        </div>
+        <div id="recentTicketsList" class="tickets-list">
+          <p class="loading">Loading…</p>
+        </div>
+      </section>
+
+      <!-- Quick Actions -->
+      <section class="quick-actions">
+        <h2>Quick Actions</h2>
+        <button class="action-btn" id="newTicketBtn"><span class="icon">➕</span><span>New Ticket</span></button>
+        <button class="action-btn" id="newCustomerBtn"><span class="icon">👤</span><span>New Customer</span></button>
+      </section>
+
+      <!-- Pending Approvals (admin only) -->
+      <section class="recent-tickets" id="pendingApprovalsSection" style="display:none;grid-column:1/-1;">
+        <div class="section-header">
+          <h2>⏳ Pending Approvals <span id="pendingBadge" style="background:var(--danger);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:6px;display:none;"></span></h2>
+        </div>
+        <div id="pendingApprovalsList">
+          <p class="empty">No pending approvals</p>
+        </div>
+      </section>
+
+      <!-- Team Management (admin only) -->
+      <section class="recent-tickets" id="teamSection" style="display:none;grid-column:1/-1;">
+        <div class="section-header">
+          <h2>👥 Team Members</h2>
+          <button class="btn btn-primary btn-sm" id="inviteAgentBtn">✉️ Invite Agent</button>
+        </div>
+        <div id="teamMembersList">
+          <p class="loading">Loading team…</p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Delete confirm modal -->
+<div id="deleteConfirmModal" class="modal">
+  <div class="modal-content confirm-modal">
+    <div class="modal-header">
+      <h2>Delete Ticket</h2>
+      <button class="close-btn" onclick="document.getElementById('deleteConfirmModal').classList.remove('active')">&times;</button>
+    </div>
+    <div class="confirm-body">
+      <p>Are you sure you want to permanently delete<br><strong id="deleteTicketLabel"></strong>?<br>This will also delete all messages and activity logs.</p>
+      <div class="confirm-actions">
+        <button class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('deleteConfirmModal').classList.remove('active')">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Ticket Modal -->
+<div id="newTicketModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h2>Create New Ticket</h2><button class="close-btn">&times;</button></div>
+    <div style="padding:20px 24px;">
+      <form id="newTicketForm">
+        <div class="form-group"><label>Subject</label><input type="text" id="ticketSubject" required></div>
+        <div class="form-group"><label>Description</label><textarea id="ticketDescription" rows="4" required></textarea></div>
+        <div class="form-group"><label>Customer</label><select id="ticketCustomer" required></select></div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="ticketPriority">
+            <option value="low">Low</option><option value="medium" selected>Medium</option>
+            <option value="high">High</option><option value="urgent">Urgent</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Create Ticket</button>
+          <button type="button" class="btn btn-secondary" id="cancelTicketBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- New Customer Modal -->
+<div id="newCustomerModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h2>Create New Customer</h2><button class="close-btn">&times;</button></div>
+    <div style="padding:20px 24px;">
+      <form id="newCustomerForm">
+        <div class="form-group"><label>Full Name</label><input type="text" id="customerName" required></div>
+        <div class="form-group"><label>Email</label><input type="email" id="customerEmail" required></div>
+        <div class="form-group"><label>Phone</label><input type="tel" id="customerPhone"></div>
+        <div class="form-group"><label>Company</label><input type="text" id="customerCompany"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Create Customer</button>
+          <button type="button" class="btn btn-secondary" id="cancelCustomerBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Invite Agent Modal -->
+<div id="inviteAgentModal" class="modal">
+  <div class="modal-content" style="max-width:460px;">
+    <div class="modal-header">
+      <h2>✉️ Invite Agent</h2>
+      <button class="close-btn" id="closeInviteBtn">&times;</button>
+    </div>
+    <div style="padding:20px 24px;">
+      <p style="color:var(--text-secondary);font-size:13.5px;margin:0 0 20px;line-height:1.6;">
+        The agent will receive an email with a link to set their password and join TradeMAV.
+      </p>
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="inviteName" placeholder="e.g. Jane Smith">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="inviteEmail" placeholder="agent@company.com">
+      </div>
+      <div class="form-group">
+        <label>Role</label>
+        <select id="inviteRole">
+          <option value="agent">Agent</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div id="inviteError" style="color:var(--danger);font-size:13px;margin-bottom:12px;display:none;"></div>
+      <div id="inviteSuccess" style="background:var(--success-light);color:var(--success-text);font-size:13px;padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:12px;display:none;"></div>
+      <div class="form-actions">
+        <button class="btn btn-primary" id="sendInviteBtn">Send Invite Email</button>
+        <button class="btn btn-secondary" id="cancelInviteBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/profile-settings.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

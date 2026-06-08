@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Settings - TradeMAV</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Settings-page layout overrides (non-toggle) ─────────────────────── */
+    .settings-layout{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:calc(100vh - var(--header-h));align-items:start}
+    .settings-nav{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;min-height:calc(100vh - var(--header-h));position:sticky;top:var(--header-h)}
+    .settings-nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-size:13.5px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all var(--t);border-left:3px solid transparent;text-decoration:none}
+    .settings-nav-item:hover{background:var(--gray-50);color:var(--text-primary)}
+    .settings-nav-item.active{background:var(--primary-50);color:var(--primary);font-weight:600;border-left-color:var(--primary)}
+    .settings-nav-label{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text-muted);padding:14px 18px 6px;margin-top:4px}
+
+    .settings-body{padding:24px 28px;max-width:780px}
+    .settings-section{display:none}
+    .settings-section.active{display:block;animation:fade-in .2s ease}
+    @keyframes fade-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+    .settings-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--card-shadow);overflow:hidden;margin-bottom:20px}
+    .settings-card-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--gray-50);display:flex;align-items:center;gap:9px}
+    .settings-card-header h3{font-size:14px;font-weight:700;color:var(--text-primary);margin:0}
+    .settings-card-header .hicon{font-size:18px}
+    .settings-card-body{padding:0}
+
+    /* ── Setting rows: increased padding so toggles breathe ── */
+    .setting-row{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:20px 22px;                     /* ← was 14px 20px */
+      border-bottom:1px solid var(--border-light);
+      gap:24px;                              /* ← was 16px */
+      min-height:68px;                       /* ← guarantees row height */
+    }
+    .setting-row:last-child{border-bottom:none}
+    .setting-row.column{flex-direction:column;align-items:flex-start;gap:10px}
+    .setting-info{flex:1;min-width:0}
+    .setting-label{font-size:13.5px;font-weight:600;color:var(--text-primary)}
+    .setting-desc{font-size:12px;color:var(--text-secondary);margin-top:2px;line-height:1.5}
+    .setting-control{flex-shrink:0;display:flex;align-items:center;}
+    .setting-control input[type="text"],
+    .setting-control input[type="password"],
+    .setting-control select{
+      padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-md);
+      font-size:13px;font-family:inherit;color:var(--text-primary);background:var(--surface);
+      transition:all var(--t);min-width:160px;
+    }
+    .setting-control input:focus,.setting-control select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(11,95,255,.1)}
+    .setting-control.full-width{width:100%}
+    .setting-control.full-width input,
+    .setting-control.full-width textarea,
+    .setting-control.full-width select{width:100%}
+
+    /* ══════════════════════════════════════════════════════════════
+       TOGGLE — defined ONCE here, overrides nothing from style.css,
+       consistent & visible in both light and dark mode
+       ══════════════════════════════════════════════════════════════ */
+
+    /* Remove any toggle rules that were here before — now handled globally in style.css */
+    /* All toggle styling lives in style.css .toggle block */
+
+    /* Password fields */
+    .pw-group{margin-bottom:12px}
+    .pw-group label{display:block;font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+    .pw-input-wrap{position:relative}
+    .pw-input-wrap input{width:100%;padding:8px 38px 8px 11px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13.5px;font-family:inherit;color:var(--text-primary);background:var(--surface);transition:all var(--t)}
+    .pw-input-wrap input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(11,95,255,.1)}
+    .pw-toggle{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:15px;color:var(--text-muted);padding:0;line-height:1}
+    .pw-strength{height:3px;border-radius:var(--radius-full);background:var(--border);margin-top:6px;overflow:hidden}
+    .pw-strength-fill{height:100%;border-radius:var(--radius-full);transition:all .3s;width:0}
+    .pw-strength-label{font-size:11.5px;font-weight:600;margin-top:4px;min-height:16px}
+    .pw-match-hint{font-size:11.5px;margin-top:4px;min-height:15px;font-weight:500}
+    .hint-ok{color:var(--success)}
+    .hint-err{color:var(--danger)}
+
+    /* Signature editor */
+    .signature-editor{width:100%;min-height:100px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13.5px;font-family:inherit;color:var(--text-primary);background:var(--surface);resize:vertical;transition:all var(--t)}
+    .signature-editor:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(11,95,255,.1)}
+
+    /* Activity log */
+    .activity-log-item{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border-light)}
+    .activity-log-item:last-child{border-bottom:none}
+    .log-icon{width:32px;height:32px;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+    .log-info{flex:1}
+    .log-device{font-size:13px;font-weight:600;color:var(--text-primary)}
+    .log-meta{font-size:12px;color:var(--text-secondary);margin-top:2px}
+    .log-time{font-size:11.5px;color:var(--text-muted);white-space:nowrap}
+
+    /* Status pills */
+    .status-pill{padding:4px 12px;border-radius:var(--radius-full);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all var(--t);display:inline-flex;align-items:center;gap:5px}
+    .status-pill.selected{box-shadow:0 0 0 2px var(--primary)}
+    .sp-online{background:#ECFDF5;color:var(--success-dark);border-color:var(--success-border)}
+    .sp-away{background:var(--warning-bg);color:var(--warning-dark);border-color:var(--warning-border)}
+    .sp-busy{background:var(--danger-bg);color:var(--danger-dark);border-color:var(--danger-border)}
+    .sp-offline{background:var(--gray-100);color:var(--gray-500);border-color:var(--gray-300)}
+
+    /* Integration rows */
+    .integration-status{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
+    .int-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .int-dot.connected{background:var(--success)}
+    .int-dot.disconnected{background:var(--gray-300)}
+
+    .save-bar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 28px;display:none;align-items:center;justify-content:space-between;gap:10px;z-index:10}
+    .save-bar.show{display:flex}
+    .save-bar-msg{font-size:13px;color:var(--text-secondary)}
+
+    .system-info-row{display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border-light);font-size:13.5px}
+    .system-info-row:last-child{border-bottom:none}
+    .system-info-row .sil{color:var(--text-secondary);font-weight:500}
+    .system-info-row .sir{color:var(--text-primary);font-weight:600;font-family:monospace;font-size:13px}
+
+    @media(max-width:768px){
+      .settings-layout{grid-template-columns:1fr}
+      .settings-nav{display:flex;overflow-x:auto;white-space:nowrap;border-right:none;border-bottom:1px solid var(--border);position:relative;top:auto;padding:0;flex-wrap:nowrap;min-height:auto}
+      .settings-nav-label{display:none}
+      .settings-nav-item{padding:10px 14px;border-left:none;border-bottom:3px solid transparent}
+      .settings-nav-item.active{border-bottom-color:var(--primary);border-left-color:transparent}
+      .settings-body{padding:16px}
+    }
+  </style>
+</head>
+<body class="app">
+<div class="app-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">🎯</div>
+      <h2>TradeMAV</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+      <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
+      <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
+      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+      <a href="/settings.html" class="nav-item active"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="header">
+      <div class="header-left"><h1>Settings</h1></div>
+      <div class="header-right">
+        <div class="user-menu">
+          <button class="user-btn" id="userBtn">
+            <div class="avatar" id="userInitials">U</div>
+            <span id="userName">User</span>
+          </button>
+          <div class="dropdown" id="userDropdown">
+            <a href="/profile.html">Profile</a>
+            <a href="/settings.html">Settings</a>
+            <a href="#" id="logoutBtn">Logout</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="settings-layout">
+      <!-- Left nav -->
+      <nav class="settings-nav" id="settingsNav">
+        <div class="settings-nav-label">Account</div>
+        <a class="settings-nav-item active" data-section="account">🔐 Account</a>
+        <a class="settings-nav-item" data-section="notifications">🔔 Notifications</a>
+        <a class="settings-nav-item" data-section="appearance">🎨 Appearance</a>
+        <div class="settings-nav-label">Preferences</div>
+        <a class="settings-nav-item" data-section="signature">✍️ Email Signature</a>
+        <a class="settings-nav-item" data-section="tickets">🎫 Ticket Preferences</a>
+        <a class="settings-nav-item" data-section="availability">🟢 Availability</a>
+        <a class="settings-nav-item" data-section="integrations">🔌 Integrations</a>
+        <a class="settings-nav-item" data-section="security">🛡️ Privacy & Security</a>
+      </nav>
+
+      <!-- Right body -->
+      <div class="settings-body">
+
+        <!-- ── Account ── -->
+        <div class="settings-section active" id="section-account">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;color:var(--text-primary)">Account Settings</h2>
+
+          <!-- Change Password -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <span class="hicon">🔒</span>
+              <h3>Change Password</h3>
+            </div>
+            <div class="settings-card-body" style="padding:20px">
+              <p style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;line-height:1.6;">
+                Your new password takes effect immediately — no admin approval required.
+              </p>
+              <div class="pw-group">
+                <label>Current Password</label>
+                <div class="pw-input-wrap">
+                  <input type="password" id="currentPw" placeholder="Enter current password" autocomplete="current-password">
+                  <button class="pw-toggle" type="button" onclick="togglePw('currentPw',this)">👁️</button>
+                </div>
+              </div>
+              <div class="pw-group">
+                <label>New Password</label>
+                <div class="pw-input-wrap">
+                  <input type="password" id="newPw" placeholder="At least 6 characters" autocomplete="new-password" oninput="checkPwStrength(this.value)">
+                  <button class="pw-toggle" type="button" onclick="togglePw('newPw',this)">👁️</button>
+                </div>
+                <div class="pw-strength"><div class="pw-strength-fill" id="pwStrFill"></div></div>
+                <div class="pw-strength-label" id="pwStrLabel"></div>
+              </div>
+              <div class="pw-group">
+                <label>Confirm New Password</label>
+                <div class="pw-input-wrap">
+                  <input type="password" id="confirmPw" placeholder="Repeat new password" autocomplete="new-password" oninput="checkPwMatch()">
+                  <button class="pw-toggle" type="button" onclick="togglePw('confirmPw',this)">👁️</button>
+                </div>
+                <div class="pw-match-hint" id="pwMatchHint"></div>
+              </div>
+              <div id="pwChangeMsg" style="font-size:13px;margin-bottom:10px;display:none;padding:9px 12px;border-radius:var(--radius-md);"></div>
+              <button class="btn btn-primary" id="changePwBtn" onclick="doChangePassword()">🔒 Update Password</button>
+            </div>
+          </div>
+
+          <!-- 2FA info -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <span class="hicon">📱</span>
+              <h3>Two-Factor Authentication</h3>
+            </div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">QR-based OTP (Forgot Password Flow)</div>
+                  <div class="setting-desc">TradeMAV uses QR code OTPs for the forgot-password flow. No additional setup needed.</div>
+                </div>
+                <div class="setting-control">
+                  <span style="background:var(--success-bg);color:var(--success-text);font-size:12px;font-weight:700;padding:3px 10px;border-radius:var(--radius-full);">✅ Enabled</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logout -->
+          <div class="settings-card">
+            <div class="settings-card-header">
+              <span class="hicon">🚪</span>
+              <h3>Sessions</h3>
+            </div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Logout from Current Session</div>
+                  <div class="setting-desc">Sign out of your account on this device.</div>
+                </div>
+                <div class="setting-control">
+                  <button class="btn btn-secondary" id="logoutCurrentBtn">Logout</button>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Logout from All Devices</div>
+                  <div class="setting-desc">Invalidate all active sessions everywhere (your current session will also end).</div>
+                </div>
+                <div class="setting-control">
+                  <button class="btn btn-danger btn-sm" id="logoutAllBtn">Logout All</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Notifications ── -->
+        <div class="settings-section" id="section-notifications">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Notification Settings</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">📬</span><h3>What to notify you about</h3></div>
+            <div class="settings-card-body">
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">New Ticket Notifications</div>
+                  <div class="setting-desc">Get notified when a new ticket is created</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle">
+                    <input type="checkbox" id="notif_new_ticket" onchange="savePref('notif_new_ticket',this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Customer Reply Notifications</div>
+                  <div class="setting-desc">Get notified when a customer replies to a ticket</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle">
+                    <input type="checkbox" id="notif_customer_reply" onchange="savePref('notif_customer_reply',this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Ticket Assignment Notifications</div>
+                  <div class="setting-desc">Get notified when a ticket is assigned to you</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle">
+                    <input type="checkbox" id="notif_assignment" onchange="savePref('notif_assignment',this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Email Notifications</div>
+                  <div class="setting-desc">Receive notifications via email</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle">
+                    <input type="checkbox" id="notif_email" onchange="savePref('notif_email',this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Browser Notifications</div>
+                  <div class="setting-desc">Allow push notifications in your browser</div>
+                </div>
+                <div class="setting-control">
+                  <label class="toggle">
+                    <input type="checkbox" id="notif_browser" onchange="requestBrowserNotif(this)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Appearance ── -->
+        <div class="settings-section" id="section-appearance">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Appearance</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">🎨</span><h3>Display Preferences</h3></div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Theme</div><div class="setting-desc">Light or Dark mode</div></div>
+                <div class="setting-control">
+                  <select id="pref_theme" onchange="savePref('pref_theme',this.value);applyTheme(this.value)">
+                    <option value="light">☀️ Light Mode</option>
+                    <option value="dark">🌙 Dark Mode</option>
+                    <option value="system">💻 System Default</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Compact View</div><div class="setting-desc">Show more items with reduced spacing</div></div>
+                <div class="setting-control">
+                  <label class="toggle">
+                    <input type="checkbox" id="pref_compact" onchange="savePref('pref_compact',this.checked);document.body.classList.toggle('compact',this.checked)">
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Language</div><div class="setting-desc">Interface language</div></div>
+                <div class="setting-control">
+                  <select id="pref_language" onchange="savePref('pref_language',this.value)">
+                    <option value="en">🇺🇸 English</option>
+                    <option value="es">🇪🇸 Spanish</option>
+                    <option value="fr">🇫🇷 French</option>
+                    <option value="de">🇩🇪 German</option>
+                    <option value="pt">🇧🇷 Portuguese</option>
+                    <option value="hi">🇮🇳 Hindi</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Time Zone</div><div class="setting-desc">Used for displaying dates and times</div></div>
+                <div class="setting-control">
+                  <select id="pref_timezone" onchange="savePref('pref_timezone',this.value)" style="min-width:200px;">
+                    <option value="UTC">UTC</option>
+                    <option value="America/New_York">Eastern Time (ET)</option>
+                    <option value="America/Chicago">Central Time (CT)</option>
+                    <option value="America/Denver">Mountain Time (MT)</option>
+                    <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                    <option value="Europe/London">London (GMT)</option>
+                    <option value="Europe/Paris">Paris (CET)</option>
+                    <option value="Asia/Kolkata">India (IST)</option>
+                    <option value="Asia/Tokyo">Tokyo (JST)</option>
+                    <option value="Australia/Sydney">Sydney (AEST)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Email Signature ── -->
+        <div class="settings-section" id="section-signature">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Email Signature</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">✍️</span><h3>Agent Signature</h3></div>
+            <div class="settings-card-body" style="padding:20px;">
+              <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">This signature is automatically appended to your outgoing email replies.</p>
+              <textarea class="signature-editor" id="pref_signature" placeholder="e.g. Best regards,&#10;Your Name&#10;TradeMAV Support Team&#10;+1 (555) 000-0000" rows="5"></textarea>
+              <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-primary" onclick="savePref('pref_signature',document.getElementById('pref_signature').value);showToast('Signature saved.','success')">Save Signature</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('pref_signature').value='';savePref('pref_signature','')">Clear</button>
+                <div style="font-size:12px;color:var(--text-muted);margin-left:auto;" id="sigPreview"></div>
+              </div>
+              <div style="margin-top:16px;background:var(--gray-50);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;">
+                <div style="font-size:11.5px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Preview</div>
+                <div id="signaturePreviewText" style="font-size:13.5px;white-space:pre-wrap;color:var(--text-secondary);min-height:32px;border-top:1px solid var(--border);padding-top:10px;margin-top:4px;"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Ticket Preferences ── -->
+        <div class="settings-section" id="section-tickets">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Ticket Preferences</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">🎫</span><h3>Default Ticket Behaviour</h3></div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Default Ticket View</div><div class="setting-desc">Which bin to show by default</div></div>
+                <div class="setting-control">
+                  <select id="pref_default_view" onchange="savePref('pref_default_view',this.value)">
+                    <option value="all">All Tickets</option>
+                    <option value="mine">My Tickets</option>
+                    <option value="unassigned">Unassigned</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Default Status Filter</div><div class="setting-desc">Pre-applied status filter on ticket list</div></div>
+                <div class="setting-control">
+                  <select id="pref_default_filter" onchange="savePref('pref_default_filter',this.value)">
+                    <option value="">All Statuses</option>
+                    <option value="open">Open</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="waiting-customer">Waiting Customer</option>
+                    <option value="resolved">Resolved</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Tickets Per Page</div><div class="setting-desc">Number of tickets shown per page</div></div>
+                <div class="setting-control">
+                  <select id="pref_per_page" onchange="savePref('pref_per_page',parseInt(this.value))">
+                    <option value="10">10</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                  </select>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Default Sort Order</div><div class="setting-desc">How tickets are sorted by default</div></div>
+                <div class="setting-control">
+                  <select id="pref_sort_order" onchange="savePref('pref_sort_order',this.value)">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="priority">By Priority</option>
+                    <option value="updated">Last Updated</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Availability ── -->
+        <div class="settings-section" id="section-availability">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Availability</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">🟢</span><h3>Your Current Status</h3></div>
+            <div class="settings-card-body" style="padding:20px;">
+              <p style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;">This controls whether you receive new ticket assignments and appear available to the team.</p>
+              <div style="display:flex;gap:10px;flex-wrap:wrap;" id="availabilityPills">
+                <button class="status-pill sp-online" data-status="active" onclick="setAvailability('active')">🟢 Active</button>
+                <button class="status-pill sp-away"   data-status="away"   onclick="setAvailability('away')">🟡 Away</button>
+                <button class="status-pill sp-busy"   data-status="busy"   onclick="setAvailability('busy')">🔴 Busy</button>
+              </div>
+              <div style="margin-top:14px;font-size:13px;color:var(--text-secondary);">
+                Current: <strong id="availLabel" style="color:var(--text-primary);">Online</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Integrations ── -->
+        <div class="settings-section" id="section-integrations">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Integrations</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">🔌</span><h3>Connected Services</h3></div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">Gmail / IMAP</div><div class="setting-desc">Email integration for incoming tickets and outgoing replies</div></div>
+                <div class="setting-control">
+                  <div class="integration-status" id="gmailStatus">
+                    <span class="int-dot disconnected"></span><span>Checking…</span>
+                  </div>
+                </div>
+              </div>
+              <div class="setting-row">
+                <div class="setting-info"><div class="setting-label">API Key</div><div class="setting-desc">Your personal API key for external integrations</div></div>
+                <div class="setting-control" style="display:flex;gap:6px;align-items:center;">
+                  <input type="password" id="apiKeyField" value="tmv_••••••••••••••••" readonly style="min-width:180px;font-family:monospace;font-size:12px;">
+                  <button class="btn btn-secondary btn-sm" onclick="toggleApiKey()">Show</button>
+                  <button class="btn btn-secondary btn-sm" onclick="copyApiKey()">Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Privacy & Security ── -->
+        <div class="settings-section" id="section-security">
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Privacy & Security</h2>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">🔍</span><h3>Login Activity</h3></div>
+            <div class="settings-card-body" id="loginActivityList">
+              <div class="activity-log-item"><div class="log-icon">⏳</div><div class="log-info"><div class="log-device">Loading…</div></div></div>
+            </div>
+          </div>
+          <div class="settings-card">
+            <div class="settings-card-header"><span class="hicon">🔐</span><h3>Active Sessions</h3></div>
+            <div class="settings-card-body">
+              <div class="setting-row">
+                <div class="setting-info">
+                  <div class="setting-label">Current Session</div>
+                  <div class="setting-desc" id="currentSessionDesc">Browser • This device</div>
+                </div>
+                <div class="setting-control">
+                  <span style="background:var(--success-bg);color:var(--success-text);font-size:12px;font-weight:700;padding:3px 10px;border-radius:var(--radius-full);">Active</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /settings-body -->
+    </div><!-- /settings-layout -->
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/profile-settings.js"></script>
+<script>
+// ── Settings page logic ────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  if (!getAuthToken()) { window.location.href = '/login.html'; return; }
+  initSettings();
+
+  // Nav
+  document.querySelectorAll('.settings-nav-item').forEach(item => {
+    item.addEventListener('click', e => {
+      e.preventDefault();
+      document.querySelectorAll('.settings-nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.settings-section').forEach(s => s.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('section-' + item.dataset.section)?.classList.add('active');
+    });
+  });
+
+  // Signature live preview
+  document.getElementById('pref_signature')?.addEventListener('input', e => {
+    document.getElementById('signaturePreviewText').textContent = e.target.value;
+  });
+
+  // Logout
+  document.getElementById('logoutBtn')?.addEventListener('click', e => {
+    e.preventDefault(); clearAuthToken(); localStorage.removeItem('user');
+    window.location.href = '/login.html';
+  });
+  document.getElementById('logoutCurrentBtn')?.addEventListener('click', () => {
+    clearAuthToken(); localStorage.removeItem('user');
+    window.location.href = '/login.html';
+  });
+  document.getElementById('logoutAllBtn')?.addEventListener('click', () => {
+    if (confirm('This will log you out of all devices. Continue?')) {
+      clearAuthToken(); localStorage.clear();
+      window.location.href = '/login.html';
+    }
+  });
+});
+
+// Password helpers
+function togglePw(id, btn) {
+  const inp = document.getElementById(id);
+  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
+  else { inp.type = 'password'; btn.textContent = '👁️'; }
+}
+
+function checkPwStrength(pw) {
+  const fill  = document.getElementById('pwStrFill');
+  const label = document.getElementById('pwStrLabel');
+  if (!pw) { fill.style.width='0'; fill.style.background=''; label.textContent=''; return; }
+  let score = 0;
+  if (pw.length >= 6) score++;
+  if (pw.length >= 10) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const levels = [
+    {w:'20%',c:'#EF4444',t:'Very Weak'},
+    {w:'40%',c:'#F59E0B',t:'Weak'},
+    {w:'60%',c:'#F59E0B',t:'Fair'},
+    {w:'80%',c:'#10B981',t:'Strong'},
+    {w:'100%',c:'#059669',t:'Very Strong'}
+  ];
+  const l = levels[Math.min(score-1,4)] || levels[0];
+  fill.style.width = l.w; fill.style.background = l.c;
+  label.textContent = l.t; label.style.color = l.c;
+}
+
+function checkPwMatch() {
+  const np = document.getElementById('newPw').value;
+  const cp = document.getElementById('confirmPw').value;
+  const hint = document.getElementById('pwMatchHint');
+  if (!cp) { hint.textContent = ''; return; }
+  if (np === cp) { hint.textContent = '✓ Passwords match'; hint.className = 'pw-match-hint hint-ok'; }
+  else           { hint.textContent = '✗ Passwords do not match'; hint.className = 'pw-match-hint hint-err'; }
+}
+
+async function doChangePassword() {
+  const cur = document.getElementById('currentPw').value;
+  const np  = document.getElementById('newPw').value;
+  const cp  = document.getElementById('confirmPw').value;
+  const msg = document.getElementById('pwChangeMsg');
+  const btn = document.getElementById('changePwBtn');
+
+  msg.style.display = 'none';
+  if (!cur || !np || !cp) return showPwMsg('Please fill in all password fields.', 'error');
+  if (np.length < 6)      return showPwMsg('New password must be at least 6 characters.', 'error');
+  if (np !== cp)          return showPwMsg('New passwords do not match.', 'error');
+
+  btn.disabled = true; btn.textContent = '⏳ Updating…';
+  try {
+    const res = await authAPI.changePassword(cur, np);
+    showPwMsg('✅ ' + res.message, 'success');
+    document.getElementById('currentPw').value = '';
+    document.getElementById('newPw').value = '';
+    document.getElementById('confirmPw').value = '';
+    document.getElementById('pwStrFill').style.width = '0';
+    document.getElementById('pwStrLabel').textContent = '';
+    document.getElementById('pwMatchHint').textContent = '';
+  } catch (err) {
+    showPwMsg('❌ ' + err.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔒 Update Password';
+  }
+}
+
+function showPwMsg(text, type) {
+  const el = document.getElementById('pwChangeMsg');
+  el.textContent = text;
+  el.style.display = 'block';
+  el.style.background = type === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)';
+  el.style.color       = type === 'success' ? 'var(--success-text)' : 'var(--danger-text)';
+  el.style.border      = type === 'success' ? '1px solid var(--success-border)' : '1px solid var(--danger-border)';
+}
+
+function applyTheme(val) {
+  if (val === 'dark') document.documentElement.setAttribute('data-theme','dark');
+  else document.documentElement.removeAttribute('data-theme');
+  localStorage.setItem('theme', val);
+}
+
+function toggleApiKey() {
+  const f = document.getElementById('apiKeyField');
+  f.type = f.type === 'password' ? 'text' : 'password';
+}
+
+function copyApiKey() {
+  navigator.clipboard?.writeText(document.getElementById('apiKeyField').value)
+    .then(() => showToast('API key copied!', 'success'));
+}
+
+function setAvailability(status) {
+  document.querySelectorAll('.status-pill').forEach(p => p.classList.remove('selected'));
+  document.querySelector('.status-pill[data-status="' + status + '"]')?.classList.add('selected');
+  const labels = { active: 'Active', busy: 'Busy', away: 'Away' };
+  document.getElementById('availLabel').textContent = labels[status] || status.charAt(0).toUpperCase() + status.slice(1);
+  savePref('pref_availability', status);
+  authAPI.updateStatus(status).catch(() => {});
+}
+
+function requestBrowserNotif(el) {
+  if (el.checked && 'Notification' in window && Notification.permission !== 'granted') {
+    Notification.requestPermission().then(p => {
+      if (p !== 'granted') { el.checked = false; showToast('Browser notifications denied.', 'warning'); }
+      else savePref('notif_browser', true);
+    });
+  } else { savePref('notif_browser', el.checked); }
+}
+</script>
+</body>
+</html>

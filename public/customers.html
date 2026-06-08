@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customers - TradeMAV</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Restore theme before render to prevent flash
+    (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+  </script>
+</head>
+<body class="app">
+  <div class="app-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2>TradeMAV</h2>
+      </div>
+      <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+      <a href="/customers.html" class="nav-item active"><span class="icon">👥</span><span class="label">Customers</span></a>
+      <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
+      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+    </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="header">
+        <div class="header-left">
+          <h1>Customers</h1>
+        </div>
+        <div class="header-right">
+          <button class="btn btn-secondary" id="refreshCustomersBtn" title="Refresh">🔄 Refresh</button>
+          <button class="btn btn-primary" id="newCustomerBtn">+ New Customer</button>
+        </div>
+      </header>
+
+      <!-- Search & Filter -->
+      <div class="filters-bar">
+        <input type="text" id="searchInput" placeholder="Search customers by name, email, or company...">
+        <button class="btn btn-secondary" id="searchBtn">Search</button>
+      </div>
+
+      <!-- Customers Table -->
+      <div class="customers-table-wrapper">
+        <table class="customers-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Company</th>
+              <th>Phone</th>
+              <th>Tickets</th>
+              <th>Total Spent</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customersTableBody">
+            <tr><td colspan="8" class="loading">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination" id="paginationContainer"></div>
+    </main>
+  </div>
+
+  <!-- Customer Details Modal -->
+  <div id="customerDetailModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="customerDetailTitle">Customer Details</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <div class="customer-detail">
+        <div class="detail-section">
+          <div class="detail-row">
+            <label>Name</label>
+            <input type="text" id="detailName" disabled>
+          </div>
+          <div class="detail-row">
+            <label>Email</label>
+            <input type="email" id="detailEmail" disabled>
+          </div>
+          <div class="detail-row">
+            <label>Phone</label>
+            <input type="tel" id="detailPhone">
+          </div>
+          <div class="detail-row">
+            <label>Company</label>
+            <input type="text" id="detailCompany">
+          </div>
+          <div class="detail-row">
+            <label>Status</label>
+            <select id="detailStatus">
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+          <div class="detail-row">
+            <label>Notes</label>
+            <textarea id="detailNotes"></textarea>
+          </div>
+        </div>
+
+        <!-- Customer Tickets -->
+        <div class="detail-section">
+          <h3>Customer Tickets</h3>
+          <div id="customerTicketsList" class="customer-tickets"></div>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn btn-primary" id="saveCustomerBtn">Save Changes</button>
+          <button class="btn btn-secondary" id="deleteCustomerBtn">Delete Customer</button>
+          <button class="btn btn-secondary" id="closeDetailBtn">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- New Customer Modal -->
+  <div id="newCustomerModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add New Customer</h2>
+        <button class="close-btn">&times;</button>
+      </div>
+      <form id="newCustomerForm">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="newName" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="newEmail" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="newPhone">
+        </div>
+        <div class="form-group">
+          <label>Company</label>
+          <input type="text" id="newCompany">
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Create Customer</button>
+          <button type="button" class="btn btn-secondary" id="cancelNewCustomerBtn">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+<script src="/js/profile-settings.js"></script>
+  <script src="/js/customers.js"></script>
+</body>
+</html>

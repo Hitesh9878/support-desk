@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tickets - TradeMAV</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    @keyframes slideIn { from{transform:translateX(40px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    /* ── Ticket bins ── */
+    .ticket-tabs{display:flex;gap:0;margin-bottom:18px;border-bottom:2px solid #e5e7eb;}
+    .ticket-tab{padding:9px 20px;border:none;background:none;cursor:pointer;font-size:14px;font-weight:500;
+      color:#6b7280;border-bottom:3px solid transparent;margin-bottom:-2px;border-radius:4px 4px 0 0;transition:all .15s;}
+    .ticket-tab:hover{background:#f3f4f6;color:#111;}
+    .ticket-tab.active{color:#2563eb;border-bottom-color:#2563eb;background:#eff6ff;}
+    .ticket-tab .tab-count{background:#e5e7eb;border-radius:99px;font-size:11px;padding:1px 7px;margin-left:5px;}
+    .ticket-tab.active .tab-count{background:#dbeafe;color:#1d4ed8;}
+
+    /* ── Auto-assign ── */
+    .btn-auto-assign{background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;
+      cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:5px;}
+    .btn-auto-assign:hover{background:#6d28d9;}
+
+    /* ── Ticket detail layout ── */
+    .ticket-detail{display:grid;grid-template-columns:280px 1fr;grid-template-rows:auto auto;gap:0;height:100%;}
+    .ticket-info{grid-column:1;grid-row:1/3;padding:20px;border-right:1px solid #e5e7eb;overflow-y:auto;}
+    .conversation-panel{grid-column:2;grid-row:1/3;display:flex;flex-direction:column;overflow:hidden;}
+
+    /* ── Conversation tabs (inside modal) ── */
+    .conv-tabs{display:flex;border-bottom:2px solid #e5e7eb;background:#f9fafb;flex-shrink:0;}
+    .conv-tab{padding:10px 20px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:500;
+      color:#6b7280;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;}
+    .conv-tab:hover{background:#f3f4f6;color:#111;}
+    .conv-tab.active{color:#2563eb;border-bottom-color:#2563eb;background:#fff;}
+    .conv-tab .badge{background:#fde68a;color:#92400e;border-radius:99px;font-size:11px;padding:1px 7px;margin-left:4px;}
+    .conv-tab.active .badge{background:#dbeafe;color:#1d4ed8;}
+
+    /* ── Tab panels ── */
+    .conv-panel{display:none;flex:1;overflow-y:auto;padding:16px;}
+    .conv-panel.active{display:flex;flex-direction:column;}
+
+    /* ── Initial message panel ── */
+    .initial-msg-card{background:#f0fdf4;border:2px solid #86efac;border-radius:10px;padding:18px;margin-bottom:0;}
+    .initial-msg-card .from-line{font-size:13px;color:#166534;margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+    .initial-msg-card .subject-line{font-size:15px;font-weight:600;color:#111827;margin-bottom:10px;}
+    .initial-msg-card .body-text{white-space:pre-wrap;line-height:1.6;color:#374151;}
+    .initial-msg-card .ts{font-size:11px;color:#6b7280;margin-top:8px;}
+    .pinned-label{display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#166534;
+      font-size:11px;padding:2px 8px;border-radius:99px;font-weight:600;margin-bottom:12px;}
+
+    /* ── Conversation messages ── */
+    .msg-bubble{border-radius:8px;padding:14px 16px;margin-bottom:12px;position:relative;}
+    .msg-bubble.customer{background:#f0fdf4;border-left:4px solid #22c55e;}
+    .msg-bubble.agent{background:#eff6ff;border-left:4px solid #3b82f6;}
+    .msg-bubble.internal{background:#fefce8;border-left:4px solid #fbbf24;}
+    .msg-meta{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+    .msg-sender{font-weight:600;font-size:14px;}
+    .msg-time{color:#6b7280;font-size:11px;margin-left:auto;}
+    .msg-body{white-space:pre-wrap;line-height:1.6;color:#374151;}
+    .msg-to{font-size:11px;color:#9ca3af;margin-top:4px;}
+    .badge-email{background:#dbeafe;color:#1d4ed8;font-size:11px;padding:2px 7px;border-radius:4px;}
+    .badge-internal{background:#fef9c3;color:#854d0e;font-size:11px;padding:2px 7px;border-radius:4px;}
+    .badge-customer{background:#dcfce7;color:#166534;font-size:11px;padding:2px 7px;border-radius:4px;}
+
+    /* ── Reply area ── */
+    .reply-area{border-top:1px solid #e5e7eb;padding:14px 16px;flex-shrink:0;background:#fff;}
+    .reply-area-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+    .reply-hint{font-size:12px;color:#6b7280;}
+    .reply-area textarea{width:100%;box-sizing:border-box;border:1px solid #d1d5db;border-radius:6px;
+      padding:10px;font-size:13px;resize:vertical;min-height:90px;}
+    .reply-area textarea:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 2px #dbeafe;}
+    .reply-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+
+    /* ── Info panel extras ── */
+    .customer-box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:14px;}
+    .channel-badge{display:inline-block;background:#e0e7ff;color:#4338ca;font-size:12px;padding:2px 8px;border-radius:4px;margin-bottom:6px;}
+    .info-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;margin:12px 0 4px;}
+    .info-select{width:100%;padding:7px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;}
+    .info-select:focus{outline:none;border-color:#3b82f6;}
+
+    /* ── Activity log ── */
+    .activity-item{font-size:12px;color:#6b7280;padding:6px 0;border-bottom:1px solid #f3f4f6;display:flex;gap:8px;}
+    .activity-time{white-space:nowrap;color:#9ca3af;}
+    .activity-text{flex:1;}
+    .old-val{text-decoration:line-through;color:#ef4444;margin:0 3px;}
+    .new-val{color:#22c55e;margin:0 3px;}
+  </style>
+  <script>
+    // Restore theme before render to prevent flash
+    (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+  </script>
+</head>
+<body class="app">
+<div class="app-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header"><h2>TradeMAV</h2></div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+      <a href="/tickets.html" class="nav-item active"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+      <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
+      <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
+      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+    </nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <h1>Tickets <span id="ticketCount" style="font-size:14px;color:#6b7280;font-weight:400;"></span></h1>
+      </div>
+      <div class="header-right" style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-secondary" id="refreshTicketsBtn">🔄 Refresh</button>
+        <button class="btn-auto-assign" id="autoAssignBtn">⚡ Auto Assign</button>
+        <button class="btn btn-primary" id="newTicketBtn">+ New Ticket</button>
+      </div>
+    </header>
+
+    <!-- Bins -->
+    <div class="ticket-tabs">
+      <button class="ticket-tab active" data-bin="all">🎫 All Tickets <span class="tab-count" id="count-all">0</span></button>
+      <button class="ticket-tab" data-bin="mine">👤 My Tickets <span class="tab-count" id="count-mine">0</span></button>
+      <button class="ticket-tab" data-bin="unassigned">📥 Unassigned <span class="tab-count" id="count-unassigned">0</span></button>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <select id="statusFilter">
+          <option value="">All Status</option>
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="waiting-customer">Waiting Customer</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <select id="priorityFilter">
+          <option value="">All Priority</option>
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <input type="text" id="searchFilter" placeholder="Search tickets…">
+      </div>
+      <button class="btn btn-secondary" id="applyFiltersBtn">Apply</button>
+    </div>
+
+    <!-- Table -->
+    <div class="tickets-table-wrapper">
+      <table class="tickets-table">
+        <thead>
+          <tr>
+            <th>Ticket ID</th><th>Subject</th><th>Customer</th>
+            <th>Status</th><th>Priority</th><th>Assigned To</th>
+            <th>Created</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="ticketsTableBody"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="paginationContainer"></div>
+  </main>
+</div>
+
+<!-- ── Ticket Detail Modal ── -->
+<div id="ticketDetailModal" class="modal">
+  <div class="modal-content large">
+    <div class="modal-header">
+      <h2 id="ticketDetailTitle">Ticket Details</h2>
+      <button class="close-btn" id="modalCloseBtn">&times;</button>
+    </div>
+
+    <div class="ticket-detail">
+      <!-- Left: metadata -->
+      <div class="ticket-info">
+        <div class="customer-box">
+          <div id="ticketChannel" class="channel-badge">📧 Email</div>
+          <div id="ticketCustomerInfo"></div>
+        </div>
+
+        <div class="info-label">Status</div>
+        <select id="ticketStatus" class="info-select">
+          <option value="open">Open</option>
+          <option value="in-progress">In Progress</option>
+          <option value="waiting-customer">Waiting Customer</option>
+          <option value="resolved">Resolved</option>
+          <option value="closed">Closed</option>
+        </select>
+
+        <div class="info-label">Priority</div>
+        <select id="ticketPriority" class="info-select">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="urgent">Urgent</option>
+        </select>
+
+        <div class="info-label">Assigned To</div>
+        <select id="ticketAssignedAgent" class="info-select">
+          <option value="">Unassigned</option>
+        </select>
+
+        <div style="margin-top:14px;">
+          <button class="btn-auto-assign" id="perTicketAutoAssign" style="width:100%;justify-content:center;">
+            ⚡ Auto-Assign Next Agent
+          </button>
+        </div>
+
+        <div class="info-label" style="margin-top:20px;">Activity Log</div>
+        <div id="activityLog"></div>
+      </div>
+
+      <!-- Right: conversation panel -->
+      <div class="conversation-panel">
+        <!-- Two tabs: Initial Message | Full Conversation -->
+        <div class="conv-tabs">
+          <button class="conv-tab active" data-panel="initial">📩 Customer's Initial Message</button>
+          <button class="conv-tab" data-panel="conversation">💬 Conversation <span class="badge" id="msgCount">0</span></button>
+        </div>
+
+        <!-- Panel: initial message -->
+        <div class="conv-panel active" id="panel-initial">
+          <div id="initialMsgContent"></div>
+        </div>
+
+        <!-- Panel: full conversation -->
+        <div class="conv-panel" id="panel-conversation">
+          <div id="messagesList" style="flex:1;overflow-y:auto;"></div>
+          <!-- Reply -->
+          <div class="reply-area">
+            <div class="reply-area-header">
+              <strong style="font-size:14px;">Reply</strong>
+              <span class="reply-hint">Ctrl+Enter to send</span>
+            </div>
+            <input type="hidden" id="replySubject">
+
+            <!-- Compose box: chips + textarea in one visual block -->
+            <div class="compose-box" id="composeBox">
+              <!-- Pending attachment chips sit ABOVE the text, inside the box -->
+              <div id="attachmentsPreview" class="att-pending-strip" style="display:none;">
+                <div id="attachmentsList"></div>
+              </div>
+              <textarea id="replyBody"
+                placeholder="Type your reply… or paste / drag-and-drop an image here"></textarea>
+              <!-- Signature preview (hidden when internal note is checked) -->
+              <div id="replySignatureBar" style="border-top:1px solid var(--border-light);padding:8px 12px 6px;display:none;">
+                <div style="font-size:11px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;">Signature</div>
+                <div id="replySignatureText" style="font-size:12.5px;color:var(--text-secondary);white-space:pre-wrap;line-height:1.5;"></div>
+              </div>
+            </div>
+
+            <div class="reply-footer">
+              <div style="flex:1;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+                  <input type="checkbox" id="isInternalNote">
+                  Internal Note
+                </label>
+                <!-- Hidden file input — triggered by the Attach button -->
+                <input type="file" id="attachmentInput" multiple style="display:none;"
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.zip,.rar">
+                <button type="button" class="attach-btn" id="attachBtn"
+                  onclick="document.getElementById('attachmentInput').click()">
+                  📎 Attach Files
+                </button>
+                <span id="attachCount" style="font-size:12px;color:#6b7280;display:none;"></span>
+              </div>
+              <button class="btn btn-primary" id="sendReplyBtn">📧 Send Reply</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- /ticket-detail -->
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/profile-settings.js"></script>
+<script src="/js/tickets.js"></script>
+</body>
+</html>

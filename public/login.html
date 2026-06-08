@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeMAV - Login</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ── Forgot-password specific ── */
+    .fp-step { display: none; }
+    .fp-step.active { display: block; animation: fade-in .25s ease; }
+
+    .qr-wrap {
+      text-align: center;
+      margin: 18px 0 10px;
+    }
+    .qr-wrap img {
+      width: 200px; height: 200px;
+      border-radius: 10px;
+      border: 3px solid var(--indigo-500);
+      box-shadow: 0 4px 16px rgba(99,102,241,.25);
+    }
+
+    .otp-timer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin: 10px 0 18px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .otp-timer-bar {
+      height: 4px;
+      border-radius: 4px;
+      background: var(--gray-200);
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+    .otp-timer-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: var(--indigo-500);
+      transition: width 1s linear, background .5s;
+    }
+    .otp-timer-fill.expiring { background: var(--danger); }
+
+    .otp-digits {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin: 14px 0 18px;
+    }
+    .otp-digit {
+      width: 44px; height: 52px;
+      text-align: center;
+      font-size: 22px;
+      font-weight: 700;
+      border: 2px solid var(--gray-200);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'DM Mono', monospace;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .otp-digit:focus {
+      outline: none;
+      border-color: var(--indigo-500);
+      box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+    .back-link:hover { color: var(--indigo-600); }
+
+    .pending-banner {
+      background: #fffbeb;
+      border: 1.5px solid #fde68a;
+      color: #92400e;
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      font-size: 13.5px;
+      margin-top: 12px;
+      display: none;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body class="auth-page">
+<div class="auth-container">
+  <div class="auth-brand">
+    <div class="auth-brand-icon">🎯</div>
+    <h1>TradeMAV</h1>
+    <p>Support Desk</p>
+  </div>
+
+  <div class="auth-card">
+
+    <!-- ── LOGIN / REGISTER tabs ── -->
+    <div id="authSection">
+      <div class="auth-tabs">
+        <button class="tab-btn active" data-tab="login">Sign In</button>
+        <button class="tab-btn"        data-tab="register">Register</button>
+      </div>
+
+      <!-- Login -->
+      <form id="loginForm" class="auth-form active">
+        <div class="auth-header">
+          <h2>Welcome back</h2>
+          <p>Sign in to your account</p>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="loginEmail" required placeholder="your@email.com" autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="loginPassword" required placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div style="text-align:right;margin:-8px 0 12px;">
+          <a href="#" id="forgotPasswordLink" style="font-size:13px;color:var(--indigo-600);font-weight:500;">
+            Forgot password?
+          </a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+        <div id="loginError"  class="error-message"></div>
+        <div id="pendingBanner" class="pending-banner"></div>
+      </form>
+
+      <!-- Register -->
+      <form id="registerForm" class="auth-form">
+        <div class="auth-header">
+          <h2>Create account</h2>
+          <p>Your account needs admin approval before you can log in.</p>
+        </div>
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" id="registerName" required placeholder="John Doe">
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="registerEmail" required placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="registerPassword" required placeholder="••••••••" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="registerRole">
+            <option value="agent">Support Agent</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+        <div id="registerError"   class="error-message"></div>
+        <div id="registerSuccess" style="color:var(--success);font-size:13px;margin-top:10px;display:none;"></div>
+      </form>
+    </div>
+
+    <!-- ── FORGOT PASSWORD section (replaces auth tabs) ── -->
+    <div id="forgotSection" style="display:none;">
+
+      <!-- Step 1: Enter email -->
+      <div id="fpStep1" class="fp-step active">
+        <div class="auth-header">
+          <h2>Forgot Password</h2>
+          <p>Enter your email and we'll generate a QR code with a one-time code.</p>
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" id="fpEmail" placeholder="your@email.com" autocomplete="email">
+        </div>
+        <button class="btn btn-primary btn-block" id="fpSendBtn">Generate QR Code</button>
+        <div id="fpStep1Error" class="error-message"></div>
+        <a class="back-link" id="backToLoginBtn">← Back to login</a>
+      </div>
+
+      <!-- Step 2: Scan QR → enter OTP -->
+      <div id="fpStep2" class="fp-step">
+        <div class="auth-header">
+          <h2>Scan the QR Code</h2>
+          <p>Scan with any QR reader — the 6-digit code will appear. A new code generates every 40 seconds.</p>
+        </div>
+
+        <div class="qr-wrap">
+          <img id="qrImage" src="" alt="QR Code">
+        </div>
+
+        <div class="otp-timer-bar">
+          <div class="otp-timer-fill" id="otpTimerFill" style="width:100%"></div>
+        </div>
+        <div class="otp-timer">
+          <span>🔄 New code in</span>
+          <strong id="otpCountdown">40s</strong>
+        </div>
+
+        <div class="otp-digits" id="otpDigits">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        </div>
+
+        <button class="btn btn-primary btn-block" id="fpVerifyBtn">Verify Code</button>
+        <div id="fpStep2Error" class="error-message"></div>
+        <a class="back-link" id="backToStep1Btn">← Enter a different email</a>
+      </div>
+
+      <!-- Step 3: Set new password -->
+      <div id="fpStep3" class="fp-step">
+        <div class="auth-header">
+          <h2>Set New Password</h2>
+          <p>Create a strong password for your account.</p>
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" id="fpNewPassword" placeholder="At least 8 characters" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Confirm Password</label>
+          <input type="password" id="fpConfirmPassword" placeholder="Repeat password" autocomplete="new-password">
+        </div>
+        <div id="fpMatchError" style="color:var(--danger);font-size:12px;margin:-8px 0 8px;display:none;">Passwords do not match</div>
+        <button class="btn btn-primary btn-block" id="fpResetBtn">Reset Password</button>
+        <div id="fpStep3Error" class="error-message"></div>
+      </div>
+
+      <!-- Step 4: Pending admin approval -->
+      <div id="fpStep4" class="fp-step" style="text-align:center;padding:12px 0;">
+        <div style="font-size:52px;margin-bottom:12px;">⏳</div>
+        <h2 style="margin-bottom:8px;">Reset Submitted!</h2>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px;line-height:1.6;">
+          Your password reset request has been sent for <strong>admin approval</strong>.<br>
+          You will receive an email once it is approved.
+        </p>
+        <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;
+          padding:10px 14px;font-size:13px;color:#92400e;margin-bottom:20px;text-align:left;">
+          ⏳ Do not try to log in with the new password yet — it will only work after admin approval.
+        </div>
+        <a href="/login.html" class="btn btn-secondary">Back to Login</a>
+      </div>
+    </div>
+
+  </div><!-- .auth-card -->
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+<script>
+// ── Tab switching ──────────────────────────────────────────────────────────────
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab + 'Form').classList.add('active');
+  });
+});
+
+// ── Forgot password flow ───────────────────────────────────────────────────────
+let fpEmail    = '';
+let fpToken    = '';
+let fpExpiry   = null;
+let otpTimer   = null;
+
+const showFP = (step) => {
+  document.getElementById('authSection').style.display    = 'none';
+  document.getElementById('forgotSection').style.display  = 'block';
+  document.querySelectorAll('.fp-step').forEach(s => s.classList.remove('active'));
+  document.getElementById('fpStep' + step).classList.add('active');
+};
+
+const showAuth = () => {
+  document.getElementById('authSection').style.display    = 'block';
+  document.getElementById('forgotSection').style.display  = 'none';
+  clearInterval(otpTimer);
+};
+
+document.getElementById('forgotPasswordLink').addEventListener('click', e => { e.preventDefault(); showFP(1); });
+document.getElementById('backToLoginBtn').addEventListener('click', () => showAuth());
+document.getElementById('backToStep1Btn').addEventListener('click', () => { clearInterval(otpTimer); showFP(1); });
+
+// ── Step 1: send email ────────────────────────────────────────────────────────
+document.getElementById('fpSendBtn').addEventListener('click', async () => {
+  const email  = document.getElementById('fpEmail').value.trim();
+  const errEl  = document.getElementById('fpStep1Error');
+  const btn    = document.getElementById('fpSendBtn');
+  errEl.textContent = '';
+  if (!email) { errEl.textContent = 'Please enter your email.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Generating…';
+  try {
+    const _apiBase = (window.location.port==='5000'||window.location.hostname!=='localhost') ? '' : 'http://localhost:5000';
+    const res  = await fetch(_apiBase + '/api/auth/forgot-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    const contentType = res.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const txt = await res.text();
+      errEl.textContent = 'Server error. Please try again.';
+      console.error('Non-JSON response:', txt.substring(0, 200));
+    } else {
+      const data = await res.json();
+      fpEmail = email;
+      if (data.qrDataUrl) {
+        loadQR(data.qrDataUrl, data.otpExpiry);
+        showFP(2);
+      } else if (!res.ok) {
+        errEl.textContent = data.message || 'No account found with that email address.';
+      } else {
+        errEl.textContent = 'No account found with that email address.';
+      }
+    }
+  } catch (err) { errEl.textContent = 'Could not connect to server. Please try again.'; console.error(err); }
+  btn.disabled = false; btn.textContent = 'Generate QR Code';
+});
+
+// ── Load QR + start 40s countdown ────────────────────────────────────────────
+function loadQR(dataUrl, expiryTs) {
+  document.getElementById('qrImage').src = dataUrl;
+  fpExpiry = new Date(expiryTs).getTime();
+  clearInterval(otpTimer);
+  // Clear OTP inputs
+  document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
+  document.querySelectorAll('.otp-digit')[0].focus();
+  startCountdown();
+}
+
+function startCountdown() {
+  const fill       = document.getElementById('otpTimerFill');
+  const countdown  = document.getElementById('otpCountdown');
+  const TOTAL      = 40;
+
+  otpTimer = setInterval(async () => {
+    const remaining = Math.max(0, Math.ceil((fpExpiry - Date.now()) / 1000));
+    const pct       = (remaining / TOTAL) * 100;
+
+    countdown.textContent   = remaining + 's';
+    fill.style.width        = pct + '%';
+    fill.className          = 'otp-timer-fill' + (remaining <= 10 ? ' expiring' : '');
+
+    if (remaining <= 0) {
+      clearInterval(otpTimer);
+      countdown.textContent = 'Refreshing…';
+      // Auto-refresh OTP
+      try {
+        const res  = await fetch((window.location.port==='5000'||window.location.hostname!=='localhost'?'':'http://localhost:5000') + '/api/auth/refresh-otp', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: fpEmail })
+        });
+        const data = await res.json();
+        if (data.qrDataUrl) loadQR(data.qrDataUrl, data.otpExpiry);
+      } catch (_) {}
+    }
+  }, 1000);
+}
+
+// ── OTP digit inputs: auto-advance and paste support ─────────────────────────
+const digits = document.querySelectorAll('.otp-digit');
+digits.forEach((input, i) => {
+  input.addEventListener('input', () => {
+    input.value = input.value.replace(/\D/g, '').slice(-1);
+    if (input.value && i < digits.length - 1) digits[i + 1].focus();
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !input.value && i > 0) digits[i - 1].focus();
+  });
+  input.addEventListener('paste', e => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+    [...pasted].forEach((ch, j) => { if (digits[j]) digits[j].value = ch; });
+    const next = Math.min(pasted.length, 5);
+    digits[next].focus();
+  });
+});
+
+// ── Step 2: verify OTP ────────────────────────────────────────────────────────
+document.getElementById('fpVerifyBtn').addEventListener('click', async () => {
+  const code   = [...digits].map(d => d.value).join('');
+  const errEl  = document.getElementById('fpStep2Error');
+  const btn    = document.getElementById('fpVerifyBtn');
+  errEl.textContent = '';
+
+  if (code.length < 6) { errEl.textContent = 'Please enter all 6 digits.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Verifying…';
+  try {
+    const res  = await fetch((window.location.port==='5000'||window.location.hostname!=='localhost'?'':'http://localhost:5000') + '/api/auth/verify-otp', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: fpEmail, code })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      errEl.textContent = data.message;
+      if (data.expired) {
+        // OTP expired — already auto-refreshed by countdown, just clear digits
+        digits.forEach(d => d.value = '');
+        digits[0].focus();
+      }
+    } else {
+      clearInterval(otpTimer);
+      fpToken = data.resetToken;
+      showFP(3);
+    }
+  } catch (_) { errEl.textContent = 'Verification failed. Please try again.'; }
+  btn.disabled = false; btn.textContent = 'Verify Code';
+});
+
+// ── Step 3: set new password ──────────────────────────────────────────────────
+document.getElementById('fpConfirmPassword').addEventListener('input', () => {
+  const match = document.getElementById('fpNewPassword').value === document.getElementById('fpConfirmPassword').value;
+  document.getElementById('fpMatchError').style.display = document.getElementById('fpConfirmPassword').value && !match ? 'block' : 'none';
+});
+
+document.getElementById('fpResetBtn').addEventListener('click', async () => {
+  const pw1   = document.getElementById('fpNewPassword').value;
+  const pw2   = document.getElementById('fpConfirmPassword').value;
+  const errEl = document.getElementById('fpStep3Error');
+  const btn   = document.getElementById('fpResetBtn');
+  errEl.textContent = '';
+
+  if (pw1.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+  if (pw1 !== pw2)    { errEl.textContent = 'Passwords do not match.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Resetting…';
+  try {
+    const res  = await fetch('/api/auth/reset-password', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resetToken: fpToken, password: pw1 })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.message; }
+    else         { showFP(4); }  // Show pending message — no redirect, admin must approve
+  } catch (_) { errEl.textContent = 'Something went wrong.'; }
+  btn.disabled = false; btn.textContent = 'Reset Password';
+});
+</script>
+</body>
+</html>

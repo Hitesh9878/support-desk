@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: supportdesk-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: supportdesk
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    networks:
+      - supportdesk-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: supportdesk-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/supportdesk?authSource=admin
+      JWT_SECRET: ${JWT_SECRET:-your_jwt_secret_key_here_change_in_production}
+      GMAIL_USER: ${GMAIL_USER:-}
+      GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD:-}
+      GMAIL_POLLING_INTERVAL: 30000
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - supportdesk-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    image: node:18-alpine
+    container_name: supportdesk-frontend
+    restart: always
+    working_dir: /app
+    volumes:
+      - ./public:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    command: npx http-server -p 3000 -c-1
+    environment:
+      REACT_APP_API_URL: http://backend:5000/api
+    depends_on:
+      - backend
+    networks:
+      - supportdesk-network
+
+volumes:
+  mongodb_data:
+  mongodb_config:
+
+networks:
+  supportdesk-network:
+    driver: bridge
