@@ -32,6 +32,7 @@
       <!-- Header -->
       <header class="header">
         <div class="header-left">
+          <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
           <h1>Reports & Analytics</h1>
         </div>
         <div class="header-right">
@@ -81,7 +82,7 @@
                   <th>Count</th>
                   <th>Percentage</th>
                   <th>Visual</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody id="priorityTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -101,7 +102,7 @@
                   <th>Count</th>
                   <th>Percentage</th>
                   <th>Visual</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody id="statusTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -121,7 +122,7 @@
                   <th>Assigned Tickets</th>
                   <th>Resolved</th>
                   <th>Avg Response Time</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody id="agentTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -141,7 +142,7 @@
                   <th>Total Tickets</th>
                   <th>Active Tickets</th>
                   <th>Resolved</th>
-                </tr>
+                 </tr>
               </thead>
               <tbody id="customersTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -163,9 +164,11 @@
       </div>
     </main>
   </div>
+  <div class="sidebar-overlay"></div>
 
   <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
   <script src="/js/reports.js"></script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

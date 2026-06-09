@@ -52,14 +52,6 @@
     .setting-control.full-width textarea,
     .setting-control.full-width select{width:100%}
 
-    /* ══════════════════════════════════════════════════════════════
-       TOGGLE — defined ONCE here, overrides nothing from style.css,
-       consistent & visible in both light and dark mode
-       ══════════════════════════════════════════════════════════════ */
-
-    /* Remove any toggle rules that were here before — now handled globally in style.css */
-    /* All toggle styling lives in style.css .toggle block */
-
     /* Password fields */
     .pw-group{margin-bottom:12px}
     .pw-group label{display:block;font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
@@ -139,7 +131,10 @@
 
   <main class="main-content">
     <header class="header">
-      <div class="header-left"><h1>Settings</h1></div>
+      <div class="header-left">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h1>Settings</h1>
+      </div>
       <div class="header-right">
         <div class="user-menu">
           <button class="user-btn" id="userBtn">
@@ -548,6 +543,7 @@
     </div><!-- /settings-layout -->
   </main>
 </div>
+<div class="sidebar-overlay"></div>
 
 <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
@@ -700,5 +696,6 @@ function requestBrowserNotif(el) {
   } else { savePref('notif_browser', el.checked); }
 }
 </script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

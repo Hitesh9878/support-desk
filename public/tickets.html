@@ -110,6 +110,7 @@
   <main class="main-content">
     <header class="header">
       <div class="header-left">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
         <h1>Tickets <span id="ticketCount" style="font-size:14px;color:#6b7280;font-weight:400;"></span></h1>
       </div>
       <div class="header-right" style="display:flex;gap:8px;align-items:center;">
@@ -161,14 +162,16 @@
             <th>Ticket ID</th><th>Subject</th><th>Customer</th>
             <th>Status</th><th>Priority</th><th>Assigned To</th>
             <th>Created</th><th>Action</th>
-          </tr>
+           </tr>
         </thead>
-        <tbody id="ticketsTableBody"><tr><td colspan="8" class="loading">Loading…</td></tr></tbody>
+        <tbody id="ticketsTableBody"><tr><td colspan="8" class="loading">Loading…</td></tr>
+        </tbody>
       </table>
     </div>
     <div class="pagination" id="paginationContainer"></div>
   </main>
 </div>
+<div class="sidebar-overlay"></div>
 
 <!-- ── Ticket Detail Modal ── -->
 <div id="ticketDetailModal" class="modal">
@@ -285,5 +288,6 @@
 <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
 <script src="/js/tickets.js"></script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

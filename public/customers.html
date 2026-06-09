@@ -32,6 +32,7 @@
       <!-- Header -->
       <header class="header">
         <div class="header-left">
+          <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
           <h1>Customers</h1>
         </div>
         <div class="header-right">
@@ -59,7 +60,7 @@
               <th>Total Spent</th>
               <th>Status</th>
               <th>Actions</th>
-            </tr>
+             </tr>
           </thead>
           <tbody id="customersTableBody">
             <tr><td colspan="8" class="loading">Loading...</td></tr>
@@ -71,6 +72,7 @@
       <div class="pagination" id="paginationContainer"></div>
     </main>
   </div>
+  <div class="sidebar-overlay"></div>
 
   <!-- Customer Details Modal -->
   <div id="customerDetailModal" class="modal">
@@ -160,5 +162,6 @@
   <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
   <script src="/js/customers.js"></script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

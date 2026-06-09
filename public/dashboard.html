@@ -63,7 +63,10 @@
   <!-- Main -->
   <main class="main-content">
     <header class="header">
-      <div class="header-left"><h1>Dashboard</h1></div>
+      <div class="header-left">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h1>Dashboard</h1>
+      </div>
       <div class="header-right">
         <button class="btn btn-secondary" id="refreshDashboardBtn">🔄 Refresh</button>
         <button class="btn btn-primary" id="inviteAgentHeaderBtn" style="display:none;">✉️ Invite Agent</button>
@@ -199,6 +202,7 @@
     </div>
   </main>
 </div>
+<div class="sidebar-overlay"></div>
 
 <!-- Delete confirm modal -->
 <div id="deleteConfirmModal" class="modal">
@@ -297,8 +301,10 @@
   </div>
 </div>
 
+<script src="/socket.io/socket.io.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
 <script src="/js/dashboard.js"></script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

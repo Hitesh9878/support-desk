@@ -30,7 +30,6 @@
     .info-field.full{grid-column:1/-1}
     .info-field label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-secondary);margin-bottom:4px}
     .info-field .field-val{font-size:13.5px;color:var(--text-primary);font-weight:500}
-    .info-field .field-val.muted{color:var(--text-secondary)}
     .info-field input,.info-field select,.info-field textarea{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13.5px;font-family:inherit;color:var(--text-primary);background:var(--surface);transition:all var(--t)}
     .info-field input:focus,.info-field select:focus,.info-field textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(11,95,255,.1)}
     .info-field input:read-only{background:var(--gray-50);color:var(--text-secondary);cursor:not-allowed}
@@ -74,7 +73,10 @@
 
   <main class="main-content">
     <header class="header">
-      <div class="header-left"><h1>My Profile</h1></div>
+      <div class="header-left">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <h1>My Profile</h1>
+      </div>
       <div class="header-right">
         <button class="btn btn-primary" id="saveProfileBtn">💾 Save Changes</button>
         <div class="user-menu">
@@ -241,6 +243,7 @@
     </div>
   </main>
 </div>
+<div class="sidebar-overlay"></div>
 
 <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
@@ -258,5 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('resetProfileBtn')?.addEventListener('click', () => populateProfileForm(window._profileUser));
 });
 </script>
+<script src="/js/mobile.js"></script>
 </body>
 </html>

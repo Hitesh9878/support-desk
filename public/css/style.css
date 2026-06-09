@@ -1629,3 +1629,328 @@ body.compact .setting-row{padding:9px 16px}
   .otp-digits { gap: 4px; }
   .otp-digit  { width: 36px; height: 44px; font-size: 18px; }
 }
+/* ============================================
+   MOBILE RESPONSIVE & HAMBURGER MENU
+   ============================================ */
+
+/* Hamburger Button */
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-right: 12px;
+  border-radius: var(--radius-md);
+  transition: background var(--t);
+  z-index: 1001;
+  position: relative;
+}
+
+.hamburger:hover {
+  background: var(--gray-100);
+}
+
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  margin: 5px 0;
+  background: var(--text-primary);
+  border-radius: 2px;
+  transition: transform var(--t), opacity var(--t);
+}
+
+/* Hamburger Animation (when open) */
+.hamburger.open span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.hamburger.open span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.open span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* Sidebar Overlay */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Sidebar Mobile Styles */
+@media (max-width: 768px) {
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    width: 280px;
+    height: 100%;
+    z-index: 999;
+    transition: left 0.3s ease;
+    box-shadow: none;
+    overflow-y: auto;
+  }
+
+  .sidebar.open {
+    left: 0;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .hamburger {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .main-content {
+    width: 100%;
+  }
+
+  /* Adjust header for mobile */
+  .header {
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .header-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .header-left h1 {
+    font-size: 1.25rem;
+  }
+
+  .header-right {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Adjust tables for horizontal scroll */
+  .customers-table-wrapper,
+  .tickets-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .customers-table,
+  .tickets-table {
+    min-width: 700px;
+  }
+
+  .customers-table th,
+  .customers-table td,
+  .tickets-table th,
+  .tickets-table td {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  /* Stats grid adjustments */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stats-dual {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Filters bar responsive */
+  .filters-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .filters-bar select,
+  .filters-bar input,
+  .filters-bar button {
+    flex: 1;
+    min-width: calc(50% - 8px);
+  }
+
+  /* Modal responsive */
+  .modal-content {
+    width: 95%;
+    margin: 20px auto;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .modal-content.large {
+    width: 95%;
+    max-width: none;
+  }
+
+  /* Ticket detail layout */
+  .ticket-detail {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .ticket-info {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .conversation-panel {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  /* Profile layout */
+  .profile-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 16px;
+  }
+
+  /* Settings layout */
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-nav {
+    overflow-x: auto;
+    white-space: nowrap;
+    display: flex;
+    padding: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 10;
+  }
+
+  .settings-nav-item {
+    display: inline-flex;
+    padding: 10px 16px;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+  }
+
+  .settings-nav-item.active {
+    border-bottom-color: var(--primary);
+    border-left-color: transparent;
+  }
+
+  .settings-nav-label {
+    display: none;
+  }
+
+  .settings-body {
+    padding: 16px;
+  }
+
+  .setting-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .setting-control {
+    width: 100%;
+  }
+
+  /* Reports page */
+  .reports-container {
+    padding: 16px;
+  }
+
+  .report-section {
+    margin-bottom: 24px;
+  }
+
+  .report-table {
+    min-width: 500px;
+  }
+
+  /* Quick actions */
+  .quick-actions {
+    grid-column: 1/-1;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  /* Conversation tabs */
+  .conv-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .conv-tab {
+    display: inline-block;
+    white-space: nowrap;
+  }
+
+  /* Reply area */
+  .reply-footer {
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+  }
+
+  .reply-footer > div:first-child {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Tickets tabs */
+  .ticket-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ticket-tab {
+    display: inline-block;
+    white-space: nowrap;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ticket-detail {
+    grid-template-columns: 260px 1fr;
+  }
+}
+
+/* Prevent body scroll when sidebar open on mobile */
+body.sidebar-open {
+  overflow: hidden;
+}
