@@ -2,9 +2,9 @@
 // or a separate dev server (port 3000, etc.)
 const API_BASE_URL = (() => {
   if (window.location.hostname === 'localhost') {
-    return 'http://150.230.136.174:5000/api';
+    return 'https://trademav.info/api';
   }
-  return 'http://150.230.136.174:5000/api'; // ← your backend URL
+  return 'https://trademav.info/api'; // ← your backend URL
 })();
 let authToken = localStorage.getItem('authToken');
 

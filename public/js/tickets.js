@@ -86,7 +86,7 @@ function populateAgentSelect(sel) {
 // ─── Socket.IO ────────────────────────────────────────────────────────────────
 function setupSocketIO() {
   if (typeof io === 'undefined') return;
-  const socket = io('http://150.230.136.174:5000', {
+  const socket = io('https://trademav.info', {
   transports: ['websocket', 'polling']
 });
 
