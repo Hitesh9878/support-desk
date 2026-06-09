@@ -1,31 +1,30 @@
 /**
  * notificationService.js  –  TradeMAV Support Desk
  * Single source of truth for ALL outgoing notification emails.
- * Uses Brevo Transactional Email API (replaces nodemailer + Gmail SMTP).
+ * Uses Brevo Transactional Email API.
  *
  * Required .env variables:
- *   BREVO_API_KEY                – your Brevo API key (xkeysib-…)
- *   BREVO_SENDER_EMAIL           – verified sender for transactional mail (e.g. noreply@trademav.online)
+ *   BREVO_API_KEY
+ *   BREVO_SENDER_EMAIL           – verified sender for transactional mail
  *   BREVO_SENDER_EMAIL_NOTIFICATION – verified sender for alert/notification mail
- *   BREVO_SENDER_NAME            – display name for transactional (default: "TradeMAV")
- *   BREVO_SENDER_NAME_ALERT      – display name for alerts     (default: "TradeMAV Alerts")
- *   APP_URL                      – public URL of the app (e.g. https://trademav.online)
+ *   BREVO_SENDER_NAME            – display name (default: "TradeMAV")
+ *   BREVO_SENDER_NAME_ALERT      – display name for alerts (default: "TradeMAV Alerts")
+ *   APP_URL                      – public URL of the app
  */
 
 require('dotenv').config();
 
-// ─── Brevo SDK setup ──────────────────────────────────────────────────────────
-const Brevo = require('@getbrevo/brevo');
+const Brevo       = require('@getbrevo/brevo');
 const apiInstance = new Brevo.TransactionalEmailsApi();
+console.log('[Notify] NOTIFICATION sender:', process.env.BREVO_SENDER_EMAIL_NOTIFICATION);
 
-// ─── Config helpers ───────────────────────────────────────────────────────────
 const APP_URL = () => process.env.APP_URL || 'http://localhost:5000';
 
 const validateConfig = () => {
   const missing = [];
-  if (!process.env.BREVO_API_KEY)                    missing.push('BREVO_API_KEY');
-  if (!process.env.BREVO_SENDER_EMAIL)               missing.push('BREVO_SENDER_EMAIL');
-  if (!process.env.BREVO_SENDER_EMAIL_NOTIFICATION)  missing.push('BREVO_SENDER_EMAIL_NOTIFICATION');
+  if (!process.env.BREVO_API_KEY)                   missing.push('BREVO_API_KEY');
+  if (!process.env.BREVO_SENDER_EMAIL)              missing.push('BREVO_SENDER_EMAIL');
+  if (!process.env.BREVO_SENDER_EMAIL_NOTIFICATION) missing.push('BREVO_SENDER_EMAIL_NOTIFICATION');
   if (missing.length) {
     console.error('[Notify] ❌ Missing Brevo env vars:', missing.join(', '));
     return false;
@@ -33,7 +32,6 @@ const validateConfig = () => {
   return true;
 };
 
-// Initialise once on module load
 let _brevoReady = false;
 (() => {
   if (!validateConfig()) return;
@@ -50,13 +48,6 @@ let _brevoReady = false;
 })();
 
 // ─── Core send function ───────────────────────────────────────────────────────
-/**
- * @param {'transactional'|'notification'} senderType
- * @param {string} to
- * @param {string} subject
- * @param {string} html
- * @param {string} [text]  – optional plain-text fallback
- */
 async function sendMail(senderType, to, subject, html, text) {
   if (!_brevoReady) {
     console.warn(`[Notify] ⚠️ Brevo not configured — skipping: "${subject}"`);
@@ -64,7 +55,7 @@ async function sendMail(senderType, to, subject, html, text) {
   }
   try {
     const isNotif = senderType === 'notification';
-    const msg = new Brevo.SendSmtpEmail();
+    const msg     = new Brevo.SendSmtpEmail();
 
     msg.sender = {
       name : isNotif
@@ -137,6 +128,21 @@ const infoBox = (rows) =>
      </table>
    </div>`;
 
+const otpBox = (code) =>
+  `<div style="text-align:center;margin:24px 0;">
+     <div style="display:inline-block;background:linear-gradient(135deg,#4f46e5,#7c3aed);
+                 border-radius:14px;padding:20px 40px;">
+       <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.7);
+                   letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px;">
+         Your Verification Code
+       </div>
+       <div style="font-size:42px;font-weight:800;color:#fff;letter-spacing:12px;
+                   font-family:'Courier New',monospace;">
+         ${code}
+       </div>
+     </div>
+   </div>`;
+
 const priorityColors = { low: '#6366f1', medium: '#f59e0b', high: '#ef4444', urgent: '#dc2626' };
 const pBadge = (p) => {
   const c = priorityColors[p] || '#6366f1';
@@ -145,9 +151,110 @@ const pBadge = (p) => {
 };
 
 // ══════════════════════════════════════════════════════════════════════════════
+// OTP EMAILS
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Send a 6-digit OTP for email verification (registration).
+ * @param {string} email
+ * @param {string} name
+ * @param {string} otp
+ */
+async function sendRegistrationOTPEmail(email, name, otp) {
+  return sendMail(
+    'notification',
+    email,
+    '[TradeMAV] Verify your email address',
+    wrap(`
+      <h2 style="margin:0 0 8px;font-size:19px;color:#111827;">Verify Your Email 📧</h2>
+      <p style="font-size:14px;color:#374151;margin:0 0 6px;line-height:1.6;">
+        Hi <strong>${name || 'there'}</strong>, thanks for registering with TradeMAV Support Desk.
+        Use the code below to verify your email address.
+      </p>
+      ${otpBox(otp)}
+      <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;
+        padding:12px 16px;font-size:13px;color:#92400e;margin-bottom:8px;">
+        ⏳ This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
+      </div>
+      <p style="font-size:12.5px;color:#9ca3af;margin:12px 0 0;">
+        If you didn't register for TradeMAV, you can safely ignore this email.
+      </p>`)
+  );
+}
+
+/**
+ * Send a 6-digit OTP for password reset (forgot password flow).
+ * @param {string} email
+ * @param {string} name
+ * @param {string} otp
+ */
+async function sendPasswordResetOTPEmail(email, name, otp) {
+  return sendMail(
+    'notification',
+    email,
+    '[TradeMAV] Password reset code',
+    wrap(`
+      <h2 style="margin:0 0 8px;font-size:19px;color:#111827;">Password Reset Code 🔐</h2>
+      <p style="font-size:14px;color:#374151;margin:0 0 6px;line-height:1.6;">
+        Hi <strong>${name || 'there'}</strong>, we received a request to reset your password.
+        Use the code below to continue.
+      </p>
+      ${otpBox(otp)}
+      <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;
+        padding:12px 16px;font-size:13px;color:#92400e;margin-bottom:8px;">
+        ⏳ This code expires in <strong>10 minutes</strong>. Do not share it with anyone.
+      </div>
+      <p style="font-size:12.5px;color:#9ca3af;margin:12px 0 0;">
+        If you did not request a password reset, please ignore this email.
+        Your password will not change unless you complete this process.
+      </p>`)
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AGENT INVITE EMAIL
+// ══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Send an invite email to a new agent with their set-password link.
+ * @param {object} agent  – { name, email, role }
+ * @param {string} inviteUrl – full URL to set-password page
+ * @param {string} invitedByName – name of the admin who sent the invite
+ */
+async function sendAgentInviteEmail(agent, inviteUrl, invitedByName = 'An administrator') {
+  return sendMail(
+    'notification',
+    agent.email,
+    `[TradeMAV] You're invited to join TradeMAV Support Desk`,
+    wrap(`
+      <h2 style="margin:0 0 8px;font-size:19px;color:#111827;">You're Invited! 🎉</h2>
+      <p style="font-size:14px;color:#374151;margin:0 0 16px;line-height:1.6;">
+        Hi <strong>${agent.name}</strong>,<br>
+        <strong>${invitedByName}</strong> has invited you to join the
+        <strong>TradeMAV Support Desk</strong> as a
+        <strong style="text-transform:capitalize;">${agent.role}</strong>.
+        Click the button below to set your password and activate your account.
+      </p>
+      ${infoBox([
+        ['Name',  agent.name],
+        ['Email', agent.email],
+        ['Role',  agent.role.charAt(0).toUpperCase() + agent.role.slice(1)]
+      ])}
+      ${btn(inviteUrl, 'Set Password & Join →')}
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;
+        padding:12px 16px;font-size:12.5px;color:#6b7280;margin-top:20px;">
+        🔗 If the button doesn't work, copy and paste this link:<br>
+        <span style="color:#4f46e5;word-break:break-all;">${inviteUrl}</span>
+      </div>
+      <div style="background:#fef9c3;border:1px solid #fde68a;border-radius:8px;
+        padding:10px 14px;font-size:12.5px;color:#92400e;margin-top:12px;">
+        ⏳ This invite link expires in <strong>48 hours</strong>.
+      </div>`)
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // TICKET ASSIGNMENT
-// Sent for every assignment type: manual, auto-assign, email-triggered.
-// Respects agent notification preferences.
 // ══════════════════════════════════════════════════════════════════════════════
 async function sendTicketAssignedEmail(agent, ticket, assignmentType = 'assigned') {
   if (!agent?.email) {
@@ -206,7 +313,7 @@ async function sendTicketAssignedEmail(agent, ticket, assignmentType = 'assigned
 // ══════════════════════════════════════════════════════════════════════════════
 async function sendRegistrationPendingEmail(user) {
   return sendMail(
-    'transactional',
+    'notification',
     user.email,
     '[TradeMAV] Registration received — pending admin approval',
     wrap(`
@@ -250,7 +357,7 @@ async function notifyAdminsNewRegistration(admins, newUser) {
 async function sendApprovalEmail(user, action) {
   const ok = action === 'approved';
   return sendMail(
-    'transactional',
+    'notification',
     user.email,
     ok ? '✅ TradeMAV account approved — you can now log in'
        : '❌ TradeMAV registration not approved',
@@ -274,7 +381,7 @@ async function sendApprovalEmail(user, action) {
 // ══════════════════════════════════════════════════════════════════════════════
 async function sendPasswordResetPendingEmail(user) {
   return sendMail(
-    'transactional',
+    'notification',
     user.email,
     '[TradeMAV] Password reset request — pending admin approval',
     wrap(`
@@ -319,7 +426,7 @@ async function notifyAdminsPasswordReset(admins, user) {
 
 async function sendPasswordResetApprovedEmail(user) {
   return sendMail(
-    'transactional',
+    'notification',
     user.email,
     '✅ TradeMAV — password reset approved',
     wrap(`
@@ -334,7 +441,7 @@ async function sendPasswordResetApprovedEmail(user) {
 
 async function sendPasswordResetRejectedEmail(user) {
   return sendMail(
-    'transactional',
+    'notification',
     user.email,
     '❌ TradeMAV — password reset not approved',
     wrap(`
@@ -355,7 +462,7 @@ async function sendPasswordResetRejectedEmail(user) {
 async function sendProfileChangeEmail(user, action) {
   const ok = action === 'approved';
   return sendMail(
-    'transactional',
+    'notification',
     user.email,
     ok ? '✅ TradeMAV — profile changes approved' : '❌ TradeMAV — profile changes not approved',
     wrap(`
@@ -380,5 +487,9 @@ module.exports = {
   notifyAdminsPasswordReset,
   sendPasswordResetApprovedEmail,
   sendPasswordResetRejectedEmail,
-  sendProfileChangeEmail
+  sendProfileChangeEmail,
+  // New exports
+  sendRegistrationOTPEmail,
+  sendPasswordResetOTPEmail,
+  sendAgentInviteEmail
 };

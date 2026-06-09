@@ -6,81 +6,132 @@
   <title>TradeMAV - Login</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* ── Forgot-password specific ── */
+    /* ── Forgot-password / OTP steps ── */
     .fp-step { display: none; }
     .fp-step.active { display: block; animation: fade-in .25s ease; }
 
-    .qr-wrap {
-      text-align: center;
-      margin: 18px 0 10px;
-    }
-    .qr-wrap img {
-      width: 200px; height: 200px;
-      border-radius: 10px;
-      border: 3px solid var(--indigo-500);
-      box-shadow: 0 4px 16px rgba(99,102,241,.25);
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0);   }
     }
 
-    .otp-timer {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      margin: 10px 0 18px;
-      font-size: 13px;
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .otp-timer-bar {
-      height: 4px;
-      border-radius: 4px;
-      background: var(--gray-200);
-      overflow: hidden;
-      margin-bottom: 14px;
-    }
-    .otp-timer-fill {
-      height: 100%;
-      border-radius: 4px;
-      background: var(--indigo-500);
-      transition: width 1s linear, background .5s;
-    }
-    .otp-timer-fill.expiring { background: var(--danger); }
-
+    /* ── OTP digit inputs ── */
     .otp-digits {
       display: flex;
       gap: 8px;
       justify-content: center;
-      margin: 14px 0 18px;
+      margin: 20px 0 18px;
     }
     .otp-digit {
-      width: 44px; height: 52px;
+      width: 46px;
+      height: 54px;
       text-align: center;
-      font-size: 22px;
+      font-size: 24px;
       font-weight: 700;
-      border: 2px solid var(--gray-200);
-      border-radius: 8px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
       background: var(--bg-primary);
       color: var(--text-primary);
-      font-family: 'DM Mono', monospace;
-      transition: border-color .15s, box-shadow .15s;
+      font-family: 'DM Mono', 'Courier New', monospace;
+      transition: border-color .15s, box-shadow .15s, transform .1s;
+      caret-color: transparent;
     }
     .otp-digit:focus {
       outline: none;
       border-color: var(--indigo-500);
       box-shadow: 0 0 0 3px rgba(99,102,241,.15);
+      transform: scale(1.05);
+    }
+    .otp-digit.filled {
+      border-color: var(--indigo-400);
+      background: var(--indigo-50, #eef2ff);
+    }
+    .otp-digit.error {
+      border-color: var(--danger);
+      animation: shake .3s ease;
+    }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      20%,60%  { transform: translateX(-4px); }
+      40%,80%  { transform: translateX(4px); }
     }
 
+    /* ── OTP info banner ── */
+    .otp-email-banner {
+      background: var(--indigo-50, #eef2ff);
+      border: 1.5px solid var(--indigo-200, #c7d2fe);
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 13.5px;
+      color: var(--indigo-800, #3730a3);
+      line-height: 1.5;
+    }
+    .otp-email-banner strong { display: block; margin-bottom: 2px; font-size: 14px; }
+
+    /* ── Resend row ── */
+    .resend-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .resend-btn {
+      background: none;
+      border: none;
+      color: var(--indigo-600);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+      transition: color .15s;
+    }
+    .resend-btn:disabled { color: var(--text-secondary); cursor: default; }
+    .resend-btn:not(:disabled):hover { color: var(--indigo-700); text-decoration: underline; }
+
+    /* ── Back link ── */
     .back-link {
       display: block;
       text-align: center;
-      margin-top: 14px;
+      margin-top: 16px;
       font-size: 13px;
       color: var(--text-secondary);
       cursor: pointer;
     }
     .back-link:hover { color: var(--indigo-600); }
 
+    /* ── Sent-check icon animation ── */
+    .sent-check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 56px;
+      height: 56px;
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      border-radius: 50%;
+      font-size: 26px;
+      margin: 0 auto 16px;
+    }
+
+    /* ── Register email-verify section ── */
+    .verify-email-section { display: none; }
+    .verify-email-section.active { display: block; animation: fade-in .25s ease; }
+
+    .otp-register-banner {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+      border-radius: 10px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+      font-size: 13.5px;
+      color: #166534;
+      line-height: 1.5;
+    }
+    .otp-register-banner strong { display: block; margin-bottom: 2px; }
+
+    /* ── Pending banner ── */
     .pending-banner {
       background: #fffbeb;
       border: 1.5px solid #fde68a;
@@ -104,14 +155,16 @@
 
   <div class="auth-card">
 
-    <!-- ── LOGIN / REGISTER tabs ── -->
+    <!-- ══════════════════════════════════════════════════════
+         LOGIN / REGISTER TABS
+    ══════════════════════════════════════════════════════ -->
     <div id="authSection">
       <div class="auth-tabs">
         <button class="tab-btn active" data-tab="login">Sign In</button>
         <button class="tab-btn"        data-tab="register">Register</button>
       </div>
 
-      <!-- Login -->
+      <!-- ── Login form ── -->
       <form id="loginForm" class="auth-form active">
         <div class="auth-header">
           <h2>Welcome back</h2>
@@ -131,85 +184,122 @@
           </a>
         </div>
         <button type="submit" class="btn btn-primary btn-block">Sign In</button>
-        <div id="loginError"  class="error-message"></div>
+        <div id="loginError"   class="error-message"></div>
         <div id="pendingBanner" class="pending-banner"></div>
       </form>
 
-      <!-- Register -->
-      <form id="registerForm" class="auth-form">
-        <div class="auth-header">
-          <h2>Create account</h2>
-          <p>Your account needs admin approval before you can log in.</p>
+      <!-- ── Register form ── -->
+      <div id="registerSection">
+        <!-- Step 1: Fill in details + request OTP -->
+        <form id="registerForm" class="auth-form">
+          <div class="auth-header">
+            <h2>Create account</h2>
+            <p>Verify your email first, then your account needs admin approval.</p>
+          </div>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="registerName" required placeholder="John Doe">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="registerEmail" required placeholder="your@email.com">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="registerPassword" required placeholder="••••••••" autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="registerRole">
+              <option value="agent">Support Agent</option>
+              <option value="admin">Administrator</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-block" id="sendRegOTPBtn">
+            Verify Email & Continue
+          </button>
+          <div id="registerError" class="error-message"></div>
+        </form>
+
+        <!-- Step 2: Verify OTP -->
+        <div id="registerVerifySection" class="verify-email-section">
+          <div class="auth-header">
+            <div class="sent-check">📧</div>
+            <h2>Check your inbox</h2>
+            <p>Enter the 6-digit code we just sent to verify your email.</p>
+          </div>
+
+          <div class="otp-register-banner">
+            <strong id="regOTPEmailDisplay"></strong>
+            Code sent! Check your inbox (and spam folder just in case).
+          </div>
+
+          <div class="otp-digits" id="regOtpDigits">
+            <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+            <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          </div>
+
+          <div class="resend-row">
+            <span id="regResendCountdown">Resend in 60s</span>
+            <button class="resend-btn" id="regResendBtn" disabled>Resend code</button>
+          </div>
+
+          <button class="btn btn-primary btn-block" id="verifyRegOTPBtn">Verify &amp; Create Account</button>
+          <div id="regOtpError" class="error-message"></div>
+          <a class="back-link" id="backToRegFormBtn">← Change email or details</a>
         </div>
-        <div class="form-group">
-          <label>Full Name</label>
-          <input type="text" id="registerName" required placeholder="John Doe">
-        </div>
-        <div class="form-group">
-          <label>Email Address</label>
-          <input type="email" id="registerEmail" required placeholder="your@email.com">
-        </div>
-        <div class="form-group">
-          <label>Password</label>
-          <input type="password" id="registerPassword" required placeholder="••••••••" autocomplete="new-password">
-        </div>
-        <div class="form-group">
-          <label>Role</label>
-          <select id="registerRole">
-            <option value="agent">Support Agent</option>
-            <option value="admin">Administrator</option>
-          </select>
-        </div>
-        <button type="submit" class="btn btn-primary btn-block">Create Account</button>
-        <div id="registerError"   class="error-message"></div>
-        <div id="registerSuccess" style="color:var(--success);font-size:13px;margin-top:10px;display:none;"></div>
-      </form>
+      </div>
     </div>
 
-    <!-- ── FORGOT PASSWORD section (replaces auth tabs) ── -->
+    <!-- ══════════════════════════════════════════════════════
+         FORGOT PASSWORD SECTION
+    ══════════════════════════════════════════════════════ -->
     <div id="forgotSection" style="display:none;">
 
       <!-- Step 1: Enter email -->
       <div id="fpStep1" class="fp-step active">
         <div class="auth-header">
           <h2>Forgot Password</h2>
-          <p>Enter your email and we'll generate a QR code with a one-time code.</p>
+          <p>Enter your email and we'll send you a 6-digit verification code.</p>
         </div>
         <div class="form-group">
           <label>Email Address</label>
           <input type="email" id="fpEmail" placeholder="your@email.com" autocomplete="email">
         </div>
-        <button class="btn btn-primary btn-block" id="fpSendBtn">Generate QR Code</button>
+        <button class="btn btn-primary btn-block" id="fpSendBtn">Send Verification Code</button>
         <div id="fpStep1Error" class="error-message"></div>
         <a class="back-link" id="backToLoginBtn">← Back to login</a>
       </div>
 
-      <!-- Step 2: Scan QR → enter OTP -->
+      <!-- Step 2: Enter OTP sent by email -->
       <div id="fpStep2" class="fp-step">
         <div class="auth-header">
-          <h2>Scan the QR Code</h2>
-          <p>Scan with any QR reader — the 6-digit code will appear. A new code generates every 40 seconds.</p>
+          <div class="sent-check">📬</div>
+          <h2>Check your email</h2>
+          <p>Enter the 6-digit code we sent to reset your password.</p>
         </div>
 
-        <div class="qr-wrap">
-          <img id="qrImage" src="" alt="QR Code">
+        <div class="otp-email-banner">
+          <strong id="fpEmailDisplay"></strong>
+          Didn't receive it? Check your spam folder or request a new code.
         </div>
 
-        <div class="otp-timer-bar">
-          <div class="otp-timer-fill" id="otpTimerFill" style="width:100%"></div>
-        </div>
-        <div class="otp-timer">
-          <span>🔄 New code in</span>
-          <strong id="otpCountdown">40s</strong>
+        <div class="otp-digits" id="fpOtpDigits">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
         </div>
 
-        <div class="otp-digits" id="otpDigits">
-          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
-          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
-          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
-          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
-          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
-          <input class="otp-digit" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]">
+        <div class="resend-row">
+          <span id="fpResendCountdown">Resend in 60s</span>
+          <button class="resend-btn" id="fpResendBtn" disabled>Resend code</button>
         </div>
 
         <button class="btn btn-primary btn-block" id="fpVerifyBtn">Verify Code</button>
@@ -231,8 +321,10 @@
           <label>Confirm Password</label>
           <input type="password" id="fpConfirmPassword" placeholder="Repeat password" autocomplete="new-password">
         </div>
-        <div id="fpMatchError" style="color:var(--danger);font-size:12px;margin:-8px 0 8px;display:none;">Passwords do not match</div>
-        <button class="btn btn-primary btn-block" id="fpResetBtn">Reset Password</button>
+        <div id="fpMatchError" style="color:var(--danger);font-size:12px;margin:-8px 0 8px;display:none;">
+          Passwords do not match
+        </div>
+        <button class="btn btn-primary btn-block" id="fpResetBtn">Submit Reset Request</button>
         <div id="fpStep3Error" class="error-message"></div>
       </div>
 
@@ -252,176 +344,299 @@
       </div>
     </div>
 
-  </div><!-- .auth-card -->
+  </div><!-- /.auth-card -->
 </div>
 
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
 <script>
-// ── Tab switching ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
+const _api = (window.location.port === '5000' || window.location.hostname !== 'localhost')
+  ? '/api' : 'http://localhost:5000/api';
+
+async function post(endpoint, body) {
+  const r = await fetch(_api + endpoint, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  return { ok: r.ok, data: await r.json() };
+}
+
+function setupOTPInputs(containerSelector, onComplete) {
+  const digits = document.querySelectorAll(`${containerSelector} .otp-digit`);
+  digits.forEach((input, i) => {
+    input.addEventListener('input', () => {
+      input.value = input.value.replace(/\D/g, '').slice(-1);
+      input.classList.toggle('filled', !!input.value);
+      if (input.value && i < digits.length - 1) digits[i + 1].focus();
+      // Auto-submit when all filled
+      if ([...digits].every(d => d.value) && onComplete) onComplete();
+    });
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Backspace') {
+        if (input.value) {
+          input.value = '';
+          input.classList.remove('filled');
+        } else if (i > 0) {
+          digits[i - 1].focus();
+          digits[i - 1].value = '';
+          digits[i - 1].classList.remove('filled');
+        }
+      }
+    });
+    input.addEventListener('paste', e => {
+      e.preventDefault();
+      const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
+      [...pasted].forEach((ch, j) => {
+        if (digits[j]) { digits[j].value = ch; digits[j].classList.add('filled'); }
+      });
+      const next = Math.min(pasted.length, digits.length - 1);
+      digits[next].focus();
+    });
+  });
+}
+
+function getOTPValue(containerSelector) {
+  return [...document.querySelectorAll(`${containerSelector} .otp-digit`)]
+    .map(d => d.value).join('');
+}
+
+function shakeOTPInputs(containerSelector) {
+  document.querySelectorAll(`${containerSelector} .otp-digit`).forEach(d => {
+    d.classList.add('error');
+    setTimeout(() => d.classList.remove('error'), 400);
+  });
+}
+
+function clearOTPInputs(containerSelector) {
+  document.querySelectorAll(`${containerSelector} .otp-digit`).forEach(d => {
+    d.value = '';
+    d.classList.remove('filled', 'error');
+  });
+  const first = document.querySelector(`${containerSelector} .otp-digit`);
+  if (first) first.focus();
+}
+
+function startResendTimer(countdownEl, btnEl, onResend, seconds = 60) {
+  let remaining = seconds;
+  btnEl.disabled = true;
+  const tick = () => {
+    countdownEl.textContent = `Resend in ${remaining}s`;
+    if (remaining <= 0) {
+      countdownEl.textContent = '';
+      btnEl.disabled = false;
+    } else {
+      remaining--;
+      setTimeout(tick, 1000);
+    }
+  };
+  tick();
+  btnEl.onclick = async () => {
+    btnEl.disabled = true;
+    await onResend();
+    startResendTimer(countdownEl, btnEl, onResend, seconds);
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════════════════════
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById(btn.dataset.tab + 'Form').classList.add('active');
+    const target = document.getElementById(btn.dataset.tab + 'Form');
+    if (target) target.classList.add('active');
+    // Reset register verify section
+    document.getElementById('registerVerifySection').classList.remove('active');
+    document.getElementById('registerForm').style.display = '';
   });
 });
 
-// ── Forgot password flow ───────────────────────────────────────────────────────
-let fpEmail    = '';
-let fpToken    = '';
-let fpExpiry   = null;
-let otpTimer   = null;
+// ═══════════════════════════════════════════════════════════════════════════════
+// REGISTER — EMAIL OTP VERIFICATION
+// ═══════════════════════════════════════════════════════════════════════════════
+let regVerificationToken = null;
+
+setupOTPInputs('#regOtpDigits', () => {
+  // Auto-submit when all 6 digits entered
+  document.getElementById('verifyRegOTPBtn').click();
+});
+
+document.getElementById('registerForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const name   = document.getElementById('registerName').value.trim();
+  const email  = document.getElementById('registerEmail').value.trim();
+  const errEl  = document.getElementById('registerError');
+  const btn    = document.getElementById('sendRegOTPBtn');
+  errEl.textContent = '';
+
+  if (!name || !email) { errEl.textContent = 'Please fill in all fields.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Sending code…';
+  try {
+    const { ok, data } = await post('/auth/send-registration-otp', { email, name });
+    if (!ok) { errEl.textContent = data.message || 'Failed to send code.'; return; }
+
+    // Show OTP verify section
+    document.getElementById('registerForm').style.display = 'none';
+    const verifySection = document.getElementById('registerVerifySection');
+    verifySection.classList.add('active');
+    document.getElementById('regOTPEmailDisplay').textContent = email;
+    clearOTPInputs('#regOtpDigits');
+
+    startResendTimer(
+      document.getElementById('regResendCountdown'),
+      document.getElementById('regResendBtn'),
+      async () => {
+        await post('/auth/send-registration-otp', { email, name });
+      }
+    );
+  } catch (_) { errEl.textContent = 'Connection error. Please try again.'; }
+  finally { btn.disabled = false; btn.textContent = 'Verify Email & Continue'; }
+});
+
+document.getElementById('verifyRegOTPBtn').addEventListener('click', async () => {
+  const email    = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value;
+  const role     = document.getElementById('registerRole').value;
+  const name     = document.getElementById('registerName').value.trim();
+  const otp      = getOTPValue('#regOtpDigits');
+  const errEl    = document.getElementById('regOtpError');
+  const btn      = document.getElementById('verifyRegOTPBtn');
+  errEl.textContent = '';
+
+  if (otp.length < 6) { errEl.textContent = 'Please enter all 6 digits.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Verifying…';
+  try {
+    // First verify OTP
+    const { ok: vOk, data: vData } = await post('/auth/verify-registration-otp', { email, otp });
+    if (!vOk) {
+      shakeOTPInputs('#regOtpDigits');
+      errEl.textContent = vData.message || 'Invalid code.';
+      if (vData.expired) clearOTPInputs('#regOtpDigits');
+      return;
+    }
+
+    regVerificationToken = vData.verificationToken;
+
+    // Now register
+    const { ok: rOk, data: rData } = await post('/auth/register', {
+      name, email, password, role,
+      verificationToken: regVerificationToken
+    });
+
+    if (!rOk) { errEl.textContent = rData.message || 'Registration failed.'; return; }
+
+    // Show success
+    document.getElementById('registerVerifySection').classList.remove('active');
+    document.getElementById('registerForm').style.display = '';
+    document.getElementById('registerForm').reset();
+    const successEl = document.getElementById('registerSuccess');
+    if (successEl) {
+      successEl.textContent = '✅ Account created! Awaiting admin approval — you\'ll receive an email.';
+      successEl.style.display = 'block';
+    }
+    // Switch to login tab
+    setTimeout(() => {
+      document.querySelector('[data-tab="login"]').click();
+    }, 2500);
+  } catch (_) { errEl.textContent = 'Connection error. Please try again.'; }
+  finally { btn.disabled = false; btn.textContent = 'Verify & Create Account'; }
+});
+
+document.getElementById('backToRegFormBtn').addEventListener('click', () => {
+  document.getElementById('registerVerifySection').classList.remove('active');
+  document.getElementById('registerForm').style.display = '';
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORGOT PASSWORD — EMAIL OTP FLOW
+// ═══════════════════════════════════════════════════════════════════════════════
+let fpEmail   = '';
+let fpToken   = '';
 
 const showFP = (step) => {
-  document.getElementById('authSection').style.display    = 'none';
-  document.getElementById('forgotSection').style.display  = 'block';
+  document.getElementById('authSection').style.display   = 'none';
+  document.getElementById('forgotSection').style.display = 'block';
   document.querySelectorAll('.fp-step').forEach(s => s.classList.remove('active'));
   document.getElementById('fpStep' + step).classList.add('active');
 };
 
 const showAuth = () => {
-  document.getElementById('authSection').style.display    = 'block';
-  document.getElementById('forgotSection').style.display  = 'none';
-  clearInterval(otpTimer);
+  document.getElementById('authSection').style.display   = 'block';
+  document.getElementById('forgotSection').style.display = 'none';
 };
 
 document.getElementById('forgotPasswordLink').addEventListener('click', e => { e.preventDefault(); showFP(1); });
 document.getElementById('backToLoginBtn').addEventListener('click', () => showAuth());
-document.getElementById('backToStep1Btn').addEventListener('click', () => { clearInterval(otpTimer); showFP(1); });
+document.getElementById('backToStep1Btn').addEventListener('click', () => showFP(1));
 
-// ── Step 1: send email ────────────────────────────────────────────────────────
+// Setup OTP inputs for forgot password
+setupOTPInputs('#fpOtpDigits', () => document.getElementById('fpVerifyBtn').click());
+
+// ── Step 1: send OTP email ────────────────────────────────────────────────────
 document.getElementById('fpSendBtn').addEventListener('click', async () => {
   const email  = document.getElementById('fpEmail').value.trim();
   const errEl  = document.getElementById('fpStep1Error');
   const btn    = document.getElementById('fpSendBtn');
   errEl.textContent = '';
-  if (!email) { errEl.textContent = 'Please enter your email.'; return; }
 
-  btn.disabled = true; btn.textContent = 'Generating…';
+  if (!email) { errEl.textContent = 'Please enter your email address.'; return; }
+
+  btn.disabled = true; btn.textContent = 'Sending…';
   try {
-    const _apiBase = (window.location.port==='5000'||window.location.hostname!=='localhost') ? '' : 'http://localhost:5000';
-    const res  = await fetch(_apiBase + '/api/auth/forgot-password', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const contentType = res.headers.get('content-type') || '';
-    if (!contentType.includes('application/json')) {
-      const txt = await res.text();
-      errEl.textContent = 'Server error. Please try again.';
-      console.error('Non-JSON response:', txt.substring(0, 200));
-    } else {
-      const data = await res.json();
-      fpEmail = email;
-      if (data.qrDataUrl) {
-        loadQR(data.qrDataUrl, data.otpExpiry);
-        showFP(2);
-      } else if (!res.ok) {
-        errEl.textContent = data.message || 'No account found with that email address.';
-      } else {
-        errEl.textContent = 'No account found with that email address.';
-      }
-    }
-  } catch (err) { errEl.textContent = 'Could not connect to server. Please try again.'; console.error(err); }
-  btn.disabled = false; btn.textContent = 'Generate QR Code';
-});
+    const { ok, data } = await post('/auth/forgot-password', { email });
 
-// ── Load QR + start 40s countdown ────────────────────────────────────────────
-function loadQR(dataUrl, expiryTs) {
-  document.getElementById('qrImage').src = dataUrl;
-  fpExpiry = new Date(expiryTs).getTime();
-  clearInterval(otpTimer);
-  // Clear OTP inputs
-  document.querySelectorAll('.otp-digit').forEach(d => d.value = '');
-  document.querySelectorAll('.otp-digit')[0].focus();
-  startCountdown();
-}
+    // Always advance (security: don't reveal if email exists)
+    fpEmail = email;
+    document.getElementById('fpEmailDisplay').textContent = email;
+    clearOTPInputs('#fpOtpDigits');
+    showFP(2);
 
-function startCountdown() {
-  const fill       = document.getElementById('otpTimerFill');
-  const countdown  = document.getElementById('otpCountdown');
-  const TOTAL      = 40;
-
-  otpTimer = setInterval(async () => {
-    const remaining = Math.max(0, Math.ceil((fpExpiry - Date.now()) / 1000));
-    const pct       = (remaining / TOTAL) * 100;
-
-    countdown.textContent   = remaining + 's';
-    fill.style.width        = pct + '%';
-    fill.className          = 'otp-timer-fill' + (remaining <= 10 ? ' expiring' : '');
-
-    if (remaining <= 0) {
-      clearInterval(otpTimer);
-      countdown.textContent = 'Refreshing…';
-      // Auto-refresh OTP
-      try {
-        const res  = await fetch((window.location.port==='5000'||window.location.hostname!=='localhost'?'':'http://localhost:5000') + '/api/auth/refresh-otp', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: fpEmail })
-        });
-        const data = await res.json();
-        if (data.qrDataUrl) loadQR(data.qrDataUrl, data.otpExpiry);
-      } catch (_) {}
-    }
-  }, 1000);
-}
-
-// ── OTP digit inputs: auto-advance and paste support ─────────────────────────
-const digits = document.querySelectorAll('.otp-digit');
-digits.forEach((input, i) => {
-  input.addEventListener('input', () => {
-    input.value = input.value.replace(/\D/g, '').slice(-1);
-    if (input.value && i < digits.length - 1) digits[i + 1].focus();
-  });
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Backspace' && !input.value && i > 0) digits[i - 1].focus();
-  });
-  input.addEventListener('paste', e => {
-    e.preventDefault();
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    [...pasted].forEach((ch, j) => { if (digits[j]) digits[j].value = ch; });
-    const next = Math.min(pasted.length, 5);
-    digits[next].focus();
-  });
+    startResendTimer(
+      document.getElementById('fpResendCountdown'),
+      document.getElementById('fpResendBtn'),
+      async () => { await post('/auth/forgot-password', { email: fpEmail }); }
+    );
+  } catch (_) { errEl.textContent = 'Connection error. Please try again.'; }
+  finally { btn.disabled = false; btn.textContent = 'Send Verification Code'; }
 });
 
 // ── Step 2: verify OTP ────────────────────────────────────────────────────────
 document.getElementById('fpVerifyBtn').addEventListener('click', async () => {
-  const code   = [...digits].map(d => d.value).join('');
-  const errEl  = document.getElementById('fpStep2Error');
-  const btn    = document.getElementById('fpVerifyBtn');
+  const code  = getOTPValue('#fpOtpDigits');
+  const errEl = document.getElementById('fpStep2Error');
+  const btn   = document.getElementById('fpVerifyBtn');
   errEl.textContent = '';
 
   if (code.length < 6) { errEl.textContent = 'Please enter all 6 digits.'; return; }
 
   btn.disabled = true; btn.textContent = 'Verifying…';
   try {
-    const res  = await fetch((window.location.port==='5000'||window.location.hostname!=='localhost'?'':'http://localhost:5000') + '/api/auth/verify-otp', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: fpEmail, code })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      errEl.textContent = data.message;
-      if (data.expired) {
-        // OTP expired — already auto-refreshed by countdown, just clear digits
-        digits.forEach(d => d.value = '');
-        digits[0].focus();
-      }
+    const { ok, data } = await post('/auth/verify-otp', { email: fpEmail, code });
+    if (!ok) {
+      shakeOTPInputs('#fpOtpDigits');
+      errEl.textContent = data.message || 'Invalid code.';
+      if (data.expired) clearOTPInputs('#fpOtpDigits');
     } else {
-      clearInterval(otpTimer);
       fpToken = data.resetToken;
       showFP(3);
     }
   } catch (_) { errEl.textContent = 'Verification failed. Please try again.'; }
-  btn.disabled = false; btn.textContent = 'Verify Code';
+  finally { btn.disabled = false; btn.textContent = 'Verify Code'; }
 });
 
 // ── Step 3: set new password ──────────────────────────────────────────────────
 document.getElementById('fpConfirmPassword').addEventListener('input', () => {
   const match = document.getElementById('fpNewPassword').value === document.getElementById('fpConfirmPassword').value;
-  document.getElementById('fpMatchError').style.display = document.getElementById('fpConfirmPassword').value && !match ? 'block' : 'none';
+  const matchErr = document.getElementById('fpMatchError');
+  matchErr.style.display = document.getElementById('fpConfirmPassword').value && !match ? 'block' : 'none';
 });
 
 document.getElementById('fpResetBtn').addEventListener('click', async () => {
@@ -434,17 +649,13 @@ document.getElementById('fpResetBtn').addEventListener('click', async () => {
   if (pw1.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
   if (pw1 !== pw2)    { errEl.textContent = 'Passwords do not match.'; return; }
 
-  btn.disabled = true; btn.textContent = 'Resetting…';
+  btn.disabled = true; btn.textContent = 'Submitting…';
   try {
-    const res  = await fetch('/api/auth/reset-password', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ resetToken: fpToken, password: pw1 })
-    });
-    const data = await res.json();
-    if (!res.ok) { errEl.textContent = data.message; }
-    else         { showFP(4); }  // Show pending message — no redirect, admin must approve
-  } catch (_) { errEl.textContent = 'Something went wrong.'; }
-  btn.disabled = false; btn.textContent = 'Reset Password';
+    const { ok, data } = await post('/auth/reset-password', { resetToken: fpToken, password: pw1 });
+    if (!ok) errEl.textContent = data.message || 'Something went wrong.';
+    else showFP(4);
+  } catch (_) { errEl.textContent = 'Something went wrong. Please try again.'; }
+  finally { btn.disabled = false; btn.textContent = 'Submit Reset Request'; }
 });
 </script>
 </body>
