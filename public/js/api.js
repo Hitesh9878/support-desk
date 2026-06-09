@@ -1,14 +1,11 @@
 // Dynamically resolve API base — works whether frontend is served by Express (port 5000)
 // or a separate dev server (port 3000, etc.)
 const API_BASE_URL = (() => {
-  // If page is served from same origin as API (e.g. Express on 5000), use relative path
-  if (window.location.port === '5000' || window.location.hostname !== 'localhost') {
-    return '/api';
+  if (window.location.hostname === 'localhost') {
+    return 'http://150.230.136.174:5000/api';
   }
-  // Otherwise (e.g. Next.js dev on 3000), hit Express directly
-  return 'http://localhost:5000/api';
+  return 'http://150.230.136.174:5000/api'; // ← your backend URL
 })();
-
 let authToken = localStorage.getItem('authToken');
 
 const setAuthToken = (token) => {

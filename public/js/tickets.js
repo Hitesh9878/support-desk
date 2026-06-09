@@ -86,7 +86,9 @@ function populateAgentSelect(sel) {
 // ─── Socket.IO ────────────────────────────────────────────────────────────────
 function setupSocketIO() {
   if (typeof io === 'undefined') return;
-  const socket = io();
+  const socket = io('http://150.230.136.174:5000', {
+  transports: ['websocket', 'polling']
+});
 
   socket.on('ticket:created', ticket => {
     showToast(`📧 New ticket: ${ticket.subject}`, 'info');

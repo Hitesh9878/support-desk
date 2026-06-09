@@ -14,11 +14,11 @@ const nextConfig = {
     return [
       {
         source: '/api/:path*',
-        destination: `http://localhost:${expressPort}/api/:path*`,
+        destination: `http://150.230.136.174:5000/api/:path*`,
       },
       {
         source: '/uploads/:path*',
-        destination: `http://localhost:${expressPort}/uploads/:path*`,
+        destination: `http://150.230.136.174:5000/uploads/:path*`,
       },
     ];
   },
