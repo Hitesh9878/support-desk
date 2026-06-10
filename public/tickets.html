@@ -219,6 +219,13 @@
           </button>
         </div>
 
+        <div style="margin-top:10px;">
+          <button class="btn" id="mergeTicketBtn"
+            style="width:100%;justify-content:center;background:#7c3aed;color:#fff;border:none;padding:7px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;display:flex;align-items:center;gap:5px;">
+            🔀 Merge Ticket
+          </button>
+        </div>
+
         <div class="info-label" style="margin-top:20px;">Activity Log</div>
         <div id="activityLog"></div>
       </div>
@@ -270,6 +277,51 @@
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Merge Ticket Modal ── -->
+<div id="mergeTicketModal" class="modal">
+  <div class="modal-content" style="max-width:520px;">
+    <div class="modal-header">
+      <h2>🔀 Merge Tickets</h2>
+      <button class="close-btn" id="mergeModalCloseBtn">&times;</button>
+    </div>
+    <div style="padding:24px;">
+      <p style="color:var(--text-secondary);font-size:13px;margin:0 0 20px;">
+        Merge duplicate tickets into a primary ticket. All messages from duplicates will be moved
+        to the primary ticket. Duplicates will be closed automatically. You can add up to <strong>3</strong> duplicate tickets.
+      </p>
+
+      <div style="margin-bottom:18px;">
+        <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;display:block;margin-bottom:6px;">
+          Primary Ticket (keep this one)
+        </label>
+        <select id="mergePrimarySelect" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;">
+          <option value="">— Select primary ticket —</option>
+        </select>
+      </div>
+
+      <div id="mergeDuplicatesSection">
+        <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;display:block;margin-bottom:6px;">
+          Duplicate Tickets (max 3)
+        </label>
+        <div id="mergeDuplicateRows" style="display:flex;flex-direction:column;gap:8px;">
+          <!-- Rows injected by JS -->
+        </div>
+        <button id="addDuplicateRowBtn" type="button"
+          style="margin-top:10px;font-size:13px;color:#2563eb;background:none;border:none;cursor:pointer;padding:0;">
+          + Add another duplicate
+        </button>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:24px;">
+        <button class="btn btn-secondary" id="mergeCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="confirmMergeBtn" style="background:#7c3aed;border-color:#7c3aed;">
+          🔀 Merge Tickets
+        </button>
       </div>
     </div>
   </div>

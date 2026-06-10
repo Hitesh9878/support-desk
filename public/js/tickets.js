@@ -841,3 +841,144 @@ function deleteTicket(id, ticketNumber) {
   document.getElementById('deleteTicketLabelTickets').textContent = ticketNumber;
   modal.classList.add('active');
 }
+
+// ─── Merge Ticket ─────────────────────────────────────────────────────────────
+let allTicketsForMerge = []; // cache of all ticket IDs/numbers for the dropdowns
+
+async function loadAllTicketsForMerge() {
+  try {
+    // Fetch up to 500 non-closed tickets for the merge selects
+    const data = await ticketAPI.getAll({ limit: 500 });
+    allTicketsForMerge = (data.tickets || []);
+  } catch(e) {
+    allTicketsForMerge = [];
+  }
+}
+
+function buildMergeOption(ticket, selectedId = '') {
+  const opt = document.createElement('option');
+  opt.value = ticket._id;
+  opt.textContent = `${ticket.ticketNumber} — ${ticket.subject.substring(0, 50)}${ticket.subject.length > 50 ? '…' : ''} [${ticket.status}]`;
+  if (ticket._id === selectedId) opt.selected = true;
+  return opt;
+}
+
+function populateMergeSelects() {
+  // Primary select — pre-select current ticket
+  const primary = document.getElementById('mergePrimarySelect');
+  primary.innerHTML = '<option value="">— Select primary ticket —</option>';
+  allTicketsForMerge.forEach(t => primary.appendChild(buildMergeOption(t, currentTicketId)));
+
+  // Rebuild duplicate rows
+  renderDuplicateRows();
+}
+
+let duplicateRowCount = 1;
+
+function renderDuplicateRows() {
+  const container = document.getElementById('mergeDuplicateRows');
+  container.innerHTML = '';
+  duplicateRowCount = Math.max(1, duplicateRowCount);
+  for (let i = 0; i < duplicateRowCount; i++) {
+    container.appendChild(buildDuplicateRow(i));
+  }
+  // Hide add button when at max
+  const addBtn = document.getElementById('addDuplicateRowBtn');
+  if (addBtn) addBtn.style.display = duplicateRowCount >= 3 ? 'none' : '';
+}
+
+function buildDuplicateRow(index) {
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:8px;align-items:center;';
+
+  const sel = document.createElement('select');
+  sel.id = `mergeDupSelect_${index}`;
+  sel.style.cssText = 'flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;';
+  sel.innerHTML = '<option value="">— Select duplicate ticket —</option>';
+  allTicketsForMerge.forEach(t => sel.appendChild(buildMergeOption(t)));
+
+  wrap.appendChild(sel);
+
+  // Remove row button (only if more than 1 row)
+  if (index > 0) {
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.textContent = '✕';
+    rmBtn.style.cssText = 'background:#fee2e2;color:#dc2626;border:none;border-radius:4px;padding:6px 10px;cursor:pointer;font-size:13px;';
+    rmBtn.addEventListener('click', () => {
+      duplicateRowCount = Math.max(1, duplicateRowCount - 1);
+      renderDuplicateRows();
+    });
+    wrap.appendChild(rmBtn);
+  }
+
+  return wrap;
+}
+
+function openMergeModal() {
+  duplicateRowCount = 1;
+  loadAllTicketsForMerge().then(() => {
+    populateMergeSelects();
+    document.getElementById('mergeTicketModal').classList.add('active');
+  });
+}
+
+function closeMergeModal() {
+  document.getElementById('mergeTicketModal').classList.remove('active');
+}
+
+async function confirmMerge() {
+  const primaryId = document.getElementById('mergePrimarySelect').value;
+  if (!primaryId) { showToast('Please select a primary ticket.', 'warning'); return; }
+
+  const dupIds = [];
+  for (let i = 0; i < duplicateRowCount; i++) {
+    const val = document.getElementById(`mergeDupSelect_${i}`)?.value;
+    if (val) dupIds.push(val);
+  }
+
+  if (dupIds.length === 0) { showToast('Please select at least one duplicate ticket.', 'warning'); return; }
+
+  const hasDupEqualPrimary = dupIds.includes(primaryId);
+  if (hasDupEqualPrimary) { showToast('A duplicate ticket cannot be the same as the primary.', 'warning'); return; }
+
+  const uniqueDups = [...new Set(dupIds)];
+  if (uniqueDups.length !== dupIds.length) { showToast('Duplicate selections found — please select different tickets.', 'warning'); return; }
+
+  const btn = document.getElementById('confirmMergeBtn');
+  btn.disabled = true; btn.textContent = 'Merging…';
+
+  try {
+    const result = await ticketAPI.merge(primaryId, uniqueDups);
+    showToast(`✅ ${result.message}`, 'success');
+    closeMergeModal();
+
+    // If we merged into the currently open ticket, reload it
+    if (primaryId === currentTicketId || uniqueDups.includes(currentTicketId)) {
+      if (currentTicketId) await openTicketDetail(primaryId);
+    }
+    await loadTickets();
+    await refreshTabCounts();
+  } catch(e) {
+    showToast('Merge failed: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false; btn.textContent = '🔀 Merge Tickets';
+  }
+}
+
+// Wire up merge modal events (called once DOM is ready — using event delegation)
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('mergeTicketBtn')?.addEventListener('click', openMergeModal);
+  document.getElementById('mergeModalCloseBtn')?.addEventListener('click', closeMergeModal);
+  document.getElementById('mergeCancelBtn')?.addEventListener('click', closeMergeModal);
+  document.getElementById('confirmMergeBtn')?.addEventListener('click', confirmMerge);
+  document.getElementById('addDuplicateRowBtn')?.addEventListener('click', () => {
+    if (duplicateRowCount < 3) {
+      duplicateRowCount++;
+      renderDuplicateRows();
+    }
+  });
+  document.getElementById('mergeTicketModal')?.addEventListener('click', e => {
+    if (e.target === document.getElementById('mergeTicketModal')) closeMergeModal();
+  });
+});

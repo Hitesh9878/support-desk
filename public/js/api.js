@@ -131,7 +131,9 @@ const ticketAPI = {
   getDashboardStats: () =>
     apiCall('/tickets/dashboard-stats', 'GET'),
   delete: (id) =>
-    apiCall(`/tickets/${id}`, 'DELETE')
+    apiCall(`/tickets/${id}`, 'DELETE'),
+  merge: (primaryTicketId, duplicateTicketIds) =>
+    apiCall('/tickets/merge', 'POST', { primaryTicketId, duplicateTicketIds })
 };
 
 // Customer APIs
@@ -174,4 +176,3 @@ authAPI.getLoginActivity   = () => apiCall('/auth/login-activity', 'GET');
   if (t === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
   else document.documentElement.removeAttribute('data-theme');
 })();
-
