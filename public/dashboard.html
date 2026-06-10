@@ -25,7 +25,7 @@
     .btn-delete-ticket {
       background: var(--danger-light); color: var(--danger); border: 1px solid #fca5a5;
       padding: 3px 9px; border-radius: var(--radius-sm); font-size: 11.5px; font-weight: 600;
-      cursor: pointer; transition: all .15s; display: none; /* shown only for admin via JS */
+      cursor: pointer; transition: all .15s; display: none;
     }
     .btn-delete-ticket:hover { background: #fecaca; }
     .ticket-row-actions { display: flex; gap: 6px; align-items: center; }
@@ -37,12 +37,14 @@
     .confirm-actions { display: flex; gap: 10px; justify-content: center; }
   </style>
   <script>
-    // Restore theme before render to prevent flash
     (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
   </script>
 </head>
 <body class="app">
 <div class="app-container">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
   <!-- Sidebar -->
   <aside class="sidebar">
@@ -64,7 +66,11 @@
   <main class="main-content">
     <header class="header">
       <div class="header-left">
-        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
         <h1>Dashboard</h1>
       </div>
       <div class="header-right">
@@ -80,9 +86,9 @@
               <img id="headerAvatarImg" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;">
               <span id="userInitials">U</span>
             </div>
-            <span id="userName">User</span>
+            <span id="userName" class="user-name-text">User</span>
           </button>
-                    <div class="dropdown" id="userDropdown">
+          <div class="dropdown" id="userDropdown">
             <a href="/profile.html">Profile</a>
             <a href="/settings.html">Settings</a>
             <a href="#" id="logoutBtn">Logout</a>
@@ -96,7 +102,6 @@
       <!-- ── Dual stat panels ── -->
       <section class="stats-section" style="grid-column:1/-1;">
         <div class="stats-dual">
-          <!-- My Tickets -->
           <div class="stat-group">
             <div class="stat-group-title"><span class="dot dot-mine"></span> My Tickets</div>
             <div class="mini-stats">
@@ -114,8 +119,6 @@
               </div>
             </div>
           </div>
-
-          <!-- Total Tickets (all) -->
           <div class="stat-group" id="totalStatGroup">
             <div class="stat-group-title"><span class="dot dot-total"></span> Total Open Tickets</div>
             <div class="mini-stats">
@@ -135,7 +138,6 @@
           </div>
         </div>
 
-        <!-- Bottom row stats -->
         <div class="stats-grid">
           <div class="stat-card">
             <span class="stat-icon">🎫</span>
@@ -202,7 +204,6 @@
     </div>
   </main>
 </div>
-<div class="sidebar-overlay"></div>
 
 <!-- Delete confirm modal -->
 <div id="deleteConfirmModal" class="modal">
@@ -301,10 +302,21 @@
   </div>
 </div>
 
-<script src="/socket.io/socket.io.js"></script>
 <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
 <script src="/js/dashboard.js"></script>
-<script src="/js/mobile.js"></script>
+<script>
+(function(){
+  var btn=document.getElementById('mobileMenuBtn');
+  var overlay=document.getElementById('sidebarOverlay');
+  var sidebar=document.querySelector('.sidebar');
+  if(!btn||!sidebar)return;
+  function openSidebar(){sidebar.classList.add('open');overlay.classList.add('active');document.body.style.overflow='hidden';}
+  function closeSidebar(){sidebar.classList.remove('open');overlay.classList.remove('active');document.body.style.overflow='';}
+  btn.addEventListener('click',openSidebar);
+  overlay.addEventListener('click',closeSidebar);
+  sidebar.querySelectorAll('.nav-item').forEach(function(a){a.addEventListener('click',closeSidebar);});
+})();
+</script>
 </body>
 </html>

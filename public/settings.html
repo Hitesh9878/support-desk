@@ -6,7 +6,6 @@
   <title>Settings - TradeMAV</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* ── Settings-page layout overrides (non-toggle) ─────────────────────── */
     .settings-layout{display:grid;grid-template-columns:220px 1fr;gap:0;min-height:calc(100vh - var(--header-h));align-items:start}
     .settings-nav{background:var(--surface);border-right:1px solid var(--border);padding:16px 0;min-height:calc(100vh - var(--header-h));position:sticky;top:var(--header-h)}
     .settings-nav-item{display:flex;align-items:center;gap:9px;padding:9px 18px;font-size:13.5px;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all var(--t);border-left:3px solid transparent;text-decoration:none}
@@ -23,15 +22,13 @@
     .settings-card-header{padding:14px 20px;border-bottom:1px solid var(--border);background:var(--gray-50);display:flex;align-items:center;gap:9px}
     .settings-card-header h3{font-size:14px;font-weight:700;color:var(--text-primary);margin:0}
     .settings-card-header .hicon{font-size:18px}
-    .settings-card-body{padding:0}
 
-    /* ── Setting rows: increased padding so toggles breathe ── */
     .setting-row{
       display:flex;align-items:center;justify-content:space-between;
-      padding:20px 22px;                     /* ← was 14px 20px */
+      padding:20px 22px;
       border-bottom:1px solid var(--border-light);
-      gap:24px;                              /* ← was 16px */
-      min-height:68px;                       /* ← guarantees row height */
+      gap:24px;
+      min-height:68px;
     }
     .setting-row:last-child{border-bottom:none}
     .setting-row.column{flex-direction:column;align-items:flex-start;gap:10px}
@@ -52,7 +49,6 @@
     .setting-control.full-width textarea,
     .setting-control.full-width select{width:100%}
 
-    /* Password fields */
     .pw-group{margin-bottom:12px}
     .pw-group label{display:block;font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
     .pw-input-wrap{position:relative}
@@ -66,11 +62,9 @@
     .hint-ok{color:var(--success)}
     .hint-err{color:var(--danger)}
 
-    /* Signature editor */
     .signature-editor{width:100%;min-height:100px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);font-size:13.5px;font-family:inherit;color:var(--text-primary);background:var(--surface);resize:vertical;transition:all var(--t)}
     .signature-editor:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 2px rgba(11,95,255,.1)}
 
-    /* Activity log */
     .activity-log-item{display:flex;align-items:flex-start;gap:12px;padding:12px 20px;border-bottom:1px solid var(--border-light)}
     .activity-log-item:last-child{border-bottom:none}
     .log-icon{width:32px;height:32px;background:var(--gray-100);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
@@ -79,7 +73,6 @@
     .log-meta{font-size:12px;color:var(--text-secondary);margin-top:2px}
     .log-time{font-size:11.5px;color:var(--text-muted);white-space:nowrap}
 
-    /* Status pills */
     .status-pill{padding:4px 12px;border-radius:var(--radius-full);font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all var(--t);display:inline-flex;align-items:center;gap:5px}
     .status-pill.selected{box-shadow:0 0 0 2px var(--primary)}
     .sp-online{background:#ECFDF5;color:var(--success-dark);border-color:var(--success-border)}
@@ -87,33 +80,47 @@
     .sp-busy{background:var(--danger-bg);color:var(--danger-dark);border-color:var(--danger-border)}
     .sp-offline{background:var(--gray-100);color:var(--gray-500);border-color:var(--gray-300)}
 
-    /* Integration rows */
     .integration-status{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
     .int-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .int-dot.connected{background:var(--success)}
     .int-dot.disconnected{background:var(--gray-300)}
-
-    .save-bar{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--border);padding:14px 28px;display:none;align-items:center;justify-content:space-between;gap:10px;z-index:10}
-    .save-bar.show{display:flex}
-    .save-bar-msg{font-size:13px;color:var(--text-secondary)}
 
     .system-info-row{display:flex;justify-content:space-between;align-items:center;padding:11px 20px;border-bottom:1px solid var(--border-light);font-size:13.5px}
     .system-info-row:last-child{border-bottom:none}
     .system-info-row .sil{color:var(--text-secondary);font-weight:500}
     .system-info-row .sir{color:var(--text-primary);font-weight:600;font-family:monospace;font-size:13px}
 
+    /* Settings responsive — override global at 768px */
     @media(max-width:768px){
       .settings-layout{grid-template-columns:1fr}
-      .settings-nav{display:flex;overflow-x:auto;white-space:nowrap;border-right:none;border-bottom:1px solid var(--border);position:relative;top:auto;padding:0;flex-wrap:nowrap;min-height:auto}
+      .settings-nav{
+        display:flex;overflow-x:auto;white-space:nowrap;
+        border-right:none;border-bottom:1px solid var(--border);
+        position:relative;top:auto;padding:0;
+        flex-wrap:nowrap;min-height:auto;
+        -webkit-overflow-scrolling:touch;
+      }
       .settings-nav-label{display:none}
-      .settings-nav-item{padding:10px 14px;border-left:none;border-bottom:3px solid transparent}
-      .settings-nav-item.active{border-bottom-color:var(--primary);border-left-color:transparent}
+      .settings-nav-item{padding:10px 14px;border-left:none;border-bottom:3px solid transparent;font-size:12.5px}
+      .settings-nav-item.active{border-bottom-color:var(--primary);border-left-color:transparent;background:transparent}
       .settings-body{padding:16px}
     }
+    @media(max-width:480px){
+      .setting-row{flex-direction:column;align-items:flex-start;gap:10px;padding:14px 16px}
+      .setting-control{width:100%}
+      .setting-control input,.setting-control select{width:100%;min-width:unset}
+    }
   </style>
+  <script>
+    (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
+  </script>
 </head>
 <body class="app">
 <div class="app-container">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
   <aside class="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo">🎯</div>
@@ -132,14 +139,18 @@
   <main class="main-content">
     <header class="header">
       <div class="header-left">
-        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
         <h1>Settings</h1>
       </div>
       <div class="header-right">
         <div class="user-menu">
           <button class="user-btn" id="userBtn">
             <div class="avatar" id="userInitials">U</div>
-            <span id="userName">User</span>
+            <span id="userName" class="user-name-text">User</span>
           </button>
           <div class="dropdown" id="userDropdown">
             <a href="/profile.html">Profile</a>
@@ -162,7 +173,7 @@
         <a class="settings-nav-item" data-section="tickets">🎫 Ticket Preferences</a>
         <a class="settings-nav-item" data-section="availability">🟢 Availability</a>
         <a class="settings-nav-item" data-section="integrations">🔌 Integrations</a>
-        <a class="settings-nav-item" data-section="security">🛡️ Privacy & Security</a>
+        <a class="settings-nav-item" data-section="security">🛡️ Privacy &amp; Security</a>
       </nav>
 
       <!-- Right body -->
@@ -172,7 +183,6 @@
         <div class="settings-section active" id="section-account">
           <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;color:var(--text-primary)">Account Settings</h2>
 
-          <!-- Change Password -->
           <div class="settings-card">
             <div class="settings-card-header">
               <span class="hicon">🔒</span>
@@ -211,7 +221,6 @@
             </div>
           </div>
 
-          <!-- 2FA info -->
           <div class="settings-card">
             <div class="settings-card-header">
               <span class="hicon">📱</span>
@@ -230,7 +239,6 @@
             </div>
           </div>
 
-          <!-- Logout -->
           <div class="settings-card">
             <div class="settings-card-header">
               <span class="hicon">🚪</span>
@@ -265,72 +273,51 @@
           <div class="settings-card">
             <div class="settings-card-header"><span class="hicon">📬</span><h3>What to notify you about</h3></div>
             <div class="settings-card-body">
-
               <div class="setting-row">
                 <div class="setting-info">
                   <div class="setting-label">New Ticket Notifications</div>
                   <div class="setting-desc">Get notified when a new ticket is created</div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle">
-                    <input type="checkbox" id="notif_new_ticket" onchange="savePref('notif_new_ticket',this.checked)">
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <label class="toggle"><input type="checkbox" id="notif_new_ticket" onchange="savePref('notif_new_ticket',this.checked)"><span class="toggle-slider"></span></label>
                 </div>
               </div>
-
               <div class="setting-row">
                 <div class="setting-info">
                   <div class="setting-label">Customer Reply Notifications</div>
                   <div class="setting-desc">Get notified when a customer replies to a ticket</div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle">
-                    <input type="checkbox" id="notif_customer_reply" onchange="savePref('notif_customer_reply',this.checked)">
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <label class="toggle"><input type="checkbox" id="notif_customer_reply" onchange="savePref('notif_customer_reply',this.checked)"><span class="toggle-slider"></span></label>
                 </div>
               </div>
-
               <div class="setting-row">
                 <div class="setting-info">
                   <div class="setting-label">Ticket Assignment Notifications</div>
                   <div class="setting-desc">Get notified when a ticket is assigned to you</div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle">
-                    <input type="checkbox" id="notif_assignment" onchange="savePref('notif_assignment',this.checked)">
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <label class="toggle"><input type="checkbox" id="notif_assignment" onchange="savePref('notif_assignment',this.checked)"><span class="toggle-slider"></span></label>
                 </div>
               </div>
-
               <div class="setting-row">
                 <div class="setting-info">
                   <div class="setting-label">Email Notifications</div>
                   <div class="setting-desc">Receive notifications via email</div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle">
-                    <input type="checkbox" id="notif_email" onchange="savePref('notif_email',this.checked)">
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <label class="toggle"><input type="checkbox" id="notif_email" onchange="savePref('notif_email',this.checked)"><span class="toggle-slider"></span></label>
                 </div>
               </div>
-
               <div class="setting-row">
                 <div class="setting-info">
                   <div class="setting-label">Browser Notifications</div>
                   <div class="setting-desc">Allow push notifications in your browser</div>
                 </div>
                 <div class="setting-control">
-                  <label class="toggle">
-                    <input type="checkbox" id="notif_browser" onchange="requestBrowserNotif(this)">
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <label class="toggle"><input type="checkbox" id="notif_browser" onchange="requestBrowserNotif(this)"><span class="toggle-slider"></span></label>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -354,10 +341,7 @@
               <div class="setting-row">
                 <div class="setting-info"><div class="setting-label">Compact View</div><div class="setting-desc">Show more items with reduced spacing</div></div>
                 <div class="setting-control">
-                  <label class="toggle">
-                    <input type="checkbox" id="pref_compact" onchange="savePref('pref_compact',this.checked);document.body.classList.toggle('compact',this.checked)">
-                    <span class="toggle-slider"></span>
-                  </label>
+                  <label class="toggle"><input type="checkbox" id="pref_compact" onchange="savePref('pref_compact',this.checked);document.body.classList.toggle('compact',this.checked)"><span class="toggle-slider"></span></label>
                 </div>
               </div>
               <div class="setting-row">
@@ -402,7 +386,7 @@
             <div class="settings-card-body" style="padding:20px;">
               <p style="font-size:13px;color:var(--text-secondary);margin-bottom:14px;line-height:1.6;">This signature is automatically appended to your outgoing email replies.</p>
               <textarea class="signature-editor" id="pref_signature" placeholder="e.g. Best regards,&#10;Your Name&#10;TradeMAV Support Team&#10;+1 (555) 000-0000" rows="5"></textarea>
-              <div style="margin-top:14px;display:flex;gap:8px;align-items:center;">
+              <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
                 <button class="btn btn-primary" onclick="savePref('pref_signature',document.getElementById('pref_signature').value);showToast('Signature saved.','success')">Save Signature</button>
                 <button class="btn btn-secondary" onclick="document.getElementById('pref_signature').value='';savePref('pref_signature','')">Clear</button>
                 <div style="font-size:12px;color:var(--text-muted);margin-left:auto;" id="sigPreview"></div>
@@ -447,10 +431,8 @@
                 <div class="setting-info"><div class="setting-label">Tickets Per Page</div><div class="setting-desc">Number of tickets shown per page</div></div>
                 <div class="setting-control">
                   <select id="pref_per_page" onchange="savePref('pref_per_page',parseInt(this.value))">
-                    <option value="10">10</option>
-                    <option value="20">20</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
+                    <option value="10">10</option><option value="20">20</option>
+                    <option value="50">50</option><option value="100">100</option>
                   </select>
                 </div>
               </div>
@@ -478,8 +460,8 @@
               <p style="font-size:13px;color:var(--text-secondary);margin-bottom:18px;">This controls whether you receive new ticket assignments and appear available to the team.</p>
               <div style="display:flex;gap:10px;flex-wrap:wrap;" id="availabilityPills">
                 <button class="status-pill sp-online" data-status="active" onclick="setAvailability('active')">🟢 Active</button>
-                <button class="status-pill sp-away"   data-status="away"   onclick="setAvailability('away')">🟡 Away</button>
-                <button class="status-pill sp-busy"   data-status="busy"   onclick="setAvailability('busy')">🔴 Busy</button>
+                <button class="status-pill sp-away" data-status="away" onclick="setAvailability('away')">🟡 Away</button>
+                <button class="status-pill sp-busy" data-status="busy" onclick="setAvailability('busy')">🔴 Busy</button>
               </div>
               <div style="margin-top:14px;font-size:13px;color:var(--text-secondary);">
                 Current: <strong id="availLabel" style="color:var(--text-primary);">Online</strong>
@@ -504,7 +486,7 @@
               </div>
               <div class="setting-row">
                 <div class="setting-info"><div class="setting-label">API Key</div><div class="setting-desc">Your personal API key for external integrations</div></div>
-                <div class="setting-control" style="display:flex;gap:6px;align-items:center;">
+                <div class="setting-control" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
                   <input type="password" id="apiKeyField" value="tmv_••••••••••••••••" readonly style="min-width:180px;font-family:monospace;font-size:12px;">
                   <button class="btn btn-secondary btn-sm" onclick="toggleApiKey()">Show</button>
                   <button class="btn btn-secondary btn-sm" onclick="copyApiKey()">Copy</button>
@@ -516,7 +498,7 @@
 
         <!-- ── Privacy & Security ── -->
         <div class="settings-section" id="section-security">
-          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Privacy & Security</h2>
+          <h2 style="font-size:18px;font-weight:800;margin-bottom:18px;">Privacy &amp; Security</h2>
           <div class="settings-card">
             <div class="settings-card-header"><span class="hicon">🔍</span><h3>Login Activity</h3></div>
             <div class="settings-card-body" id="loginActivityList">
@@ -543,17 +525,14 @@
     </div><!-- /settings-layout -->
   </main>
 </div>
-<div class="sidebar-overlay"></div>
 
 <script src="/js/api.js"></script>
 <script src="/js/profile-settings.js"></script>
 <script>
-// ── Settings page logic ────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   if (!getAuthToken()) { window.location.href = '/login.html'; return; }
   initSettings();
 
-  // Nav
   document.querySelectorAll('.settings-nav-item').forEach(item => {
     item.addEventListener('click', e => {
       e.preventDefault();
@@ -564,12 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Signature live preview
   document.getElementById('pref_signature')?.addEventListener('input', e => {
     document.getElementById('signaturePreviewText').textContent = e.target.value;
   });
 
-  // Logout
   document.getElementById('logoutBtn')?.addEventListener('click', e => {
     e.preventDefault(); clearAuthToken(); localStorage.removeItem('user');
     window.location.href = '/login.html';
@@ -586,7 +563,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// Password helpers
 function togglePw(id, btn) {
   const inp = document.getElementById(id);
   if (inp.type === 'password') { inp.type = 'text'; btn.textContent = '🙈'; }
@@ -604,11 +580,8 @@ function checkPwStrength(pw) {
   if (/[0-9]/.test(pw)) score++;
   if (/[^A-Za-z0-9]/.test(pw)) score++;
   const levels = [
-    {w:'20%',c:'#EF4444',t:'Very Weak'},
-    {w:'40%',c:'#F59E0B',t:'Weak'},
-    {w:'60%',c:'#F59E0B',t:'Fair'},
-    {w:'80%',c:'#10B981',t:'Strong'},
-    {w:'100%',c:'#059669',t:'Very Strong'}
+    {w:'20%',c:'#EF4444',t:'Very Weak'},{w:'40%',c:'#F59E0B',t:'Weak'},
+    {w:'60%',c:'#F59E0B',t:'Fair'},{w:'80%',c:'#10B981',t:'Strong'},{w:'100%',c:'#059669',t:'Very Strong'}
   ];
   const l = levels[Math.min(score-1,4)] || levels[0];
   fill.style.width = l.w; fill.style.background = l.c;
@@ -628,14 +601,10 @@ async function doChangePassword() {
   const cur = document.getElementById('currentPw').value;
   const np  = document.getElementById('newPw').value;
   const cp  = document.getElementById('confirmPw').value;
-  const msg = document.getElementById('pwChangeMsg');
   const btn = document.getElementById('changePwBtn');
-
-  msg.style.display = 'none';
   if (!cur || !np || !cp) return showPwMsg('Please fill in all password fields.', 'error');
   if (np.length < 6)      return showPwMsg('New password must be at least 6 characters.', 'error');
   if (np !== cp)          return showPwMsg('New passwords do not match.', 'error');
-
   btn.disabled = true; btn.textContent = '⏳ Updating…';
   try {
     const res = await authAPI.changePassword(cur, np);
@@ -696,6 +665,18 @@ function requestBrowserNotif(el) {
   } else { savePref('notif_browser', el.checked); }
 }
 </script>
-<script src="/js/mobile.js"></script>
+<script>
+(function(){
+  var btn=document.getElementById('mobileMenuBtn');
+  var overlay=document.getElementById('sidebarOverlay');
+  var sidebar=document.querySelector('.sidebar');
+  if(!btn||!sidebar)return;
+  function openSidebar(){sidebar.classList.add('open');overlay.classList.add('active');document.body.style.overflow='hidden';}
+  function closeSidebar(){sidebar.classList.remove('open');overlay.classList.remove('active');document.body.style.overflow='';}
+  btn.addEventListener('click',openSidebar);
+  overlay.addEventListener('click',closeSidebar);
+  sidebar.querySelectorAll('.nav-item').forEach(function(a){a.addEventListener('click',closeSidebar);});
+})();
+</script>
 </body>
 </html>

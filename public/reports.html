@@ -6,25 +6,28 @@
   <title>Reports - TradeMAV</title>
   <link rel="stylesheet" href="/css/style.css">
   <script>
-    // Restore theme before render to prevent flash
     (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
   </script>
 </head>
 <body class="app">
   <div class="app-container">
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>TradeMAV</h2>
       </div>
       <nav class="sidebar-nav">
-      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
-      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
-      <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
-      <a href="/reports.html" class="nav-item active"><span class="icon">📈</span><span class="label">Reports</span></a>
-      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
-      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
-    </nav>
+        <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+        <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+        <a href="/customers.html" class="nav-item"><span class="icon">👥</span><span class="label">Customers</span></a>
+        <a href="/reports.html" class="nav-item active"><span class="icon">📈</span><span class="label">Reports</span></a>
+        <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+        <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+      </nav>
     </aside>
 
     <!-- Main Content -->
@@ -32,8 +35,12 @@
       <!-- Header -->
       <header class="header">
         <div class="header-left">
-          <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
-          <h1>Reports & Analytics</h1>
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <h1>Reports &amp; Analytics</h1>
         </div>
         <div class="header-right">
           <button class="btn btn-secondary" id="refreshReportsBtn">🔄 Refresh</button>
@@ -41,12 +48,12 @@
         </div>
       </header>
 
-      <!-- Reports Content -->
       <!-- Scope banner (shown for agents) -->
       <div id="reportScopeBanner" style="display:none;background:#eff6ff;border:1.5px solid #bfdbfe;
         color:#1e40af;font-size:13px;font-weight:500;padding:11px 20px;margin:14px 24px 0;
         border-radius:8px;align-items:center;gap:8px;">
       </div>
+
       <div class="reports-container">
         <!-- Ticket Statistics -->
         <section class="report-section">
@@ -78,11 +85,8 @@
             <table class="report-table">
               <thead>
                 <tr>
-                  <th>Priority</th>
-                  <th>Count</th>
-                  <th>Percentage</th>
-                  <th>Visual</th>
-                 </tr>
+                  <th>Priority</th><th>Count</th><th>Percentage</th><th>Visual</th>
+                </tr>
               </thead>
               <tbody id="priorityTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -98,11 +102,8 @@
             <table class="report-table">
               <thead>
                 <tr>
-                  <th>Status</th>
-                  <th>Count</th>
-                  <th>Percentage</th>
-                  <th>Visual</th>
-                 </tr>
+                  <th>Status</th><th>Count</th><th>Percentage</th><th>Visual</th>
+                </tr>
               </thead>
               <tbody id="statusTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -118,11 +119,8 @@
             <table class="report-table">
               <thead>
                 <tr>
-                  <th>Agent</th>
-                  <th>Assigned Tickets</th>
-                  <th>Resolved</th>
-                  <th>Avg Response Time</th>
-                 </tr>
+                  <th>Agent</th><th>Assigned Tickets</th><th>Resolved</th><th>Avg Response Time</th>
+                </tr>
               </thead>
               <tbody id="agentTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -138,11 +136,8 @@
             <table class="report-table">
               <thead>
                 <tr>
-                  <th>Customer Name</th>
-                  <th>Total Tickets</th>
-                  <th>Active Tickets</th>
-                  <th>Resolved</th>
-                 </tr>
+                  <th>Customer Name</th><th>Total Tickets</th><th>Active Tickets</th><th>Resolved</th>
+                </tr>
               </thead>
               <tbody id="customersTable">
                 <tr><td colspan="4" class="loading">Loading...</td></tr>
@@ -164,11 +159,22 @@
       </div>
     </main>
   </div>
-  <div class="sidebar-overlay"></div>
 
   <script src="/js/api.js"></script>
-<script src="/js/profile-settings.js"></script>
+  <script src="/js/profile-settings.js"></script>
   <script src="/js/reports.js"></script>
-<script src="/js/mobile.js"></script>
+  <script>
+  (function(){
+    var btn=document.getElementById('mobileMenuBtn');
+    var overlay=document.getElementById('sidebarOverlay');
+    var sidebar=document.querySelector('.sidebar');
+    if(!btn||!sidebar)return;
+    function openSidebar(){sidebar.classList.add('open');overlay.classList.add('active');document.body.style.overflow='hidden';}
+    function closeSidebar(){sidebar.classList.remove('open');overlay.classList.remove('active');document.body.style.overflow='';}
+    btn.addEventListener('click',openSidebar);
+    overlay.addEventListener('click',closeSidebar);
+    sidebar.querySelectorAll('.nav-item').forEach(function(a){a.addEventListener('click',closeSidebar);});
+  })();
+  </script>
 </body>
 </html>

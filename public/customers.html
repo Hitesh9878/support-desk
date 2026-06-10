@@ -6,25 +6,28 @@
   <title>Customers - TradeMAV</title>
   <link rel="stylesheet" href="/css/style.css">
   <script>
-    // Restore theme before render to prevent flash
     (function(){var t=localStorage.getItem('theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');})();
   </script>
 </head>
 <body class="app">
   <div class="app-container">
+
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>TradeMAV</h2>
       </div>
       <nav class="sidebar-nav">
-      <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
-      <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
-      <a href="/customers.html" class="nav-item active"><span class="icon">👥</span><span class="label">Customers</span></a>
-      <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
-      <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
-      <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
-    </nav>
+        <a href="/dashboard.html" class="nav-item"><span class="icon">📊</span><span class="label">Dashboard</span></a>
+        <a href="/tickets.html" class="nav-item"><span class="icon">🎫</span><span class="label">Tickets</span></a>
+        <a href="/customers.html" class="nav-item active"><span class="icon">👥</span><span class="label">Customers</span></a>
+        <a href="/reports.html" class="nav-item"><span class="icon">📈</span><span class="label">Reports</span></a>
+        <a href="/profile.html" class="nav-item"><span class="icon">👤</span><span class="label">Profile</span></a>
+        <a href="/settings.html" class="nav-item"><span class="icon">⚙️</span><span class="label">Settings</span></a>
+      </nav>
     </aside>
 
     <!-- Main Content -->
@@ -32,7 +35,11 @@
       <!-- Header -->
       <header class="header">
         <div class="header-left">
-          <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
+          <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
           <h1>Customers</h1>
         </div>
         <div class="header-right">
@@ -60,7 +67,7 @@
               <th>Total Spent</th>
               <th>Status</th>
               <th>Actions</th>
-             </tr>
+            </tr>
           </thead>
           <tbody id="customersTableBody">
             <tr><td colspan="8" class="loading">Loading...</td></tr>
@@ -72,7 +79,6 @@
       <div class="pagination" id="paginationContainer"></div>
     </main>
   </div>
-  <div class="sidebar-overlay"></div>
 
   <!-- Customer Details Modal -->
   <div id="customerDetailModal" class="modal">
@@ -112,7 +118,6 @@
           </div>
         </div>
 
-        <!-- Customer Tickets -->
         <div class="detail-section">
           <h3>Customer Tickets</h3>
           <div id="customerTicketsList" class="customer-tickets"></div>
@@ -160,8 +165,20 @@
   </div>
 
   <script src="/js/api.js"></script>
-<script src="/js/profile-settings.js"></script>
+  <script src="/js/profile-settings.js"></script>
   <script src="/js/customers.js"></script>
-<script src="/js/mobile.js"></script>
+  <script>
+  (function(){
+    var btn=document.getElementById('mobileMenuBtn');
+    var overlay=document.getElementById('sidebarOverlay');
+    var sidebar=document.querySelector('.sidebar');
+    if(!btn||!sidebar)return;
+    function openSidebar(){sidebar.classList.add('open');overlay.classList.add('active');document.body.style.overflow='hidden';}
+    function closeSidebar(){sidebar.classList.remove('open');overlay.classList.remove('active');document.body.style.overflow='';}
+    btn.addEventListener('click',openSidebar);
+    overlay.addEventListener('click',closeSidebar);
+    sidebar.querySelectorAll('.nav-item').forEach(function(a){a.addEventListener('click',closeSidebar);});
+  })();
+  </script>
 </body>
 </html>
