@@ -218,8 +218,10 @@ async function loadTickets() {
   const status   = document.getElementById('statusFilter')?.value;
   const priority = document.getElementById('priorityFilter')?.value;
   const search   = document.getElementById('searchFilter')?.value;
-  const filters  = { page: currentPage, limit: PER_PAGE };
+  const filters  = { page: currentPage, limit: PER_PAGE, sort: '-createdAt' };
   if (status)   filters.status   = status;
+  // Hide closed tickets by default — only show them when explicitly filtered
+  if (!status)  filters.excludeStatus = 'closed';
   if (priority) filters.priority = priority;
   if (search)   filters.search   = search;
   if (currentBin === 'mine' && currentUserId) filters.assignedAgent = currentUserId;
@@ -237,9 +239,9 @@ async function loadTickets() {
 async function refreshTabCounts() {
   try {
     const [all, mine, unassigned] = await Promise.all([
-      ticketAPI.getAll({ limit:1, page:1 }),
-      currentUserId ? ticketAPI.getAll({ limit:1, page:1, assignedAgent: currentUserId }) : {total:0},
-      ticketAPI.getAll({ limit:1, page:1, unassigned:'true' })
+      ticketAPI.getAll({ limit:1, page:1, excludeStatus:'closed' }),
+      currentUserId ? ticketAPI.getAll({ limit:1, page:1, assignedAgent: currentUserId, excludeStatus:'closed' }) : {total:0},
+      ticketAPI.getAll({ limit:1, page:1, unassigned:'true', excludeStatus:'closed' })
     ]);
     document.getElementById('count-all').textContent        = all.total       ?? 0;
     document.getElementById('count-mine').textContent       = mine.total      ?? 0;
