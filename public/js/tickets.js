@@ -254,27 +254,34 @@ function displayTickets(tickets) {
     return;
   }
   tbody.innerHTML = tickets.map(t => {
-    const icon = t.channel === 'email' ? '📧' : t.channel === 'web' ? '🌐' : '📞';
-    return `<tr onclick="openTicketDetail('${t._id}')" style="cursor:pointer;">
-      <td><strong>${t.ticketNumber}</strong></td>
-      <td>${icon} ${esc(t.subject)}</td>
-      <td>${esc(t.customer?.name || 'Unknown')}</td>
-      <td><span class="status status-${t.status}">${t.status}</span></td>
-      <td><span class="priority priority-${t.priority}">${t.priority}</span></td>
-      <td>${esc(t.assignedAgent?.name || 'Unassigned')}</td>
-      <td>${new Date(t.createdAt).toLocaleDateString()}</td>
-      <td style="white-space:nowrap;">
-        <div style="display:flex;gap:6px;justify-content:center;align-items:center;">
-          <button class="btn-small btn-view-ticket"
-            onclick="openTicketDetail('${t._id}');event.stopPropagation();">
-            👁 View
-          </button>
-          ${currentUserRole === 'admin' ? `
-          <button class="btn-delete-row"
-            onclick="event.stopPropagation();deleteTicket('${t._id}','${t.ticketNumber}')"
-            title="Delete ticket">
-            🗑 Delete
-          </button>` : ''}
+    const dateStr = new Date(t.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const assignee = esc(t.assignedAgent?.name || 'Unassigned');
+    const customer = esc(t.customer?.name || 'Unknown');
+    const subject  = esc(t.subject || '—');
+    const statusLabel   = t.status.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    const priorityLabel = t.priority.charAt(0).toUpperCase() + t.priority.slice(1);
+    return `<tr class="ticket-card-row" onclick="openTicketDetail('${t._id}')">
+      <td colspan="8" style="padding:0;border-bottom:1px solid var(--border-light);">
+        <div class="tcard">
+          <div class="tcard-top">
+            <div class="tcard-meta-item"><span class="tcard-meta-label">ASSIGNED TO</span><span class="tcard-meta-value">&nbsp;- ${assignee}</span></div>
+            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">CREATED</span><span class="tcard-meta-value">&nbsp;- ${dateStr}</span></div>
+          </div>
+          <div class="tcard-mid">
+            <div class="tcard-meta-item"><span class="tcard-id">${esc(t.ticketNumber)}</span></div>
+            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">STATUS</span><span class="tcard-meta-value">&nbsp;- ${statusLabel}</span></div>
+          </div>
+          <div class="tcard-sub">
+            <div class="tcard-meta-item"><span class="tcard-meta-label">SUBJECT</span><span class="tcard-meta-value tcard-subject">&nbsp;- ${subject}</span></div>
+            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">PRIORITY</span><span class="tcard-meta-value">&nbsp;- ${priorityLabel}</span></div>
+          </div>
+          <div class="tcard-bot">
+            <div class="tcard-meta-item"><span class="tcard-meta-label">CUSTOMER</span><span class="tcard-meta-value">&nbsp;- ${customer}</span></div>
+            <div class="tcard-actions">
+              <button class="tcard-btn tcard-btn-view" onclick="openTicketDetail('${t._id}');event.stopPropagation();">View</button>
+              ${currentUserRole === 'admin' ? `<button class="tcard-btn tcard-btn-delete" onclick="event.stopPropagation();deleteTicket('${t._id}','${t.ticketNumber}')">Delete</button>` : ''}
+            </div>
+          </div>
         </div>
       </td>
     </tr>`;
