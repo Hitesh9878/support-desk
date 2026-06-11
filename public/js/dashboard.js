@@ -289,43 +289,83 @@ async function loadTeamMembers() {
       `<span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;background:#e0e7ff;color:#3730a3;text-transform:capitalize;">${r}</span>`;
 
     container.innerHTML = `
-      <table class="tickets-table" style="margin-top:4px;">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Joined</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${members.map(m => `
+      <div class="team-table-wrap">
+        <table class="team-table">
+          <thead>
             <tr>
-              <td style="font-weight:600;">${esc(m.name)}</td>
-              <td style="color:var(--text-secondary);font-size:13px;">${esc(m.email)}</td>
-              <td>${roleBadge(m.role)}</td>
-              <td>${statusBadge(m.status)}</td>
-              <td style="font-size:12px;color:var(--text-secondary);">
+              <th>Name</th>
+              <th>Email</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Joined</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${members.map(m => `
+              <tr>
+                <td style="font-weight:600;">${esc(m.name)}</td>
+                <td style="color:var(--text-secondary);font-size:13px;">${esc(m.email)}</td>
+                <td>${roleBadge(m.role)}</td>
+                <td>${statusBadge(m.status)}</td>
+                <td style="font-size:12px;color:var(--text-secondary);">
+                  ${m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : m.status === 'invited' ? '⏳ Pending' : '—'}
+                </td>
+                <td>
+                  <div style="display:flex;gap:6px;">
+                    ${m.status === 'invited' ? `
+                      <button class="btn-small" style="background:var(--indigo-50);color:var(--indigo-700);border:1px solid var(--indigo-200);"
+                        onclick="resendInvite('${m._id}', '${esc(m.name)}')">
+                        🔄 Resend
+                      </button>` : ''}
+                    <button class="btn-small" style="background:var(--danger-light);color:var(--danger-text);border:1px solid #fca5a5;"
+                      onclick="removeMember('${m._id}', '${esc(m.name)}')">
+                      🗑 Remove
+                    </button>
+                  </div>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="team-cards-mobile">
+        ${members.map(m => `
+          <div class="team-card">
+            <div class="team-card-row">
+              <span class="team-card-label">NAME</span>
+              <span class="team-card-val team-card-name">${esc(m.name)}</span>
+            </div>
+            <div class="team-card-row">
+              <span class="team-card-label">EMAIL</span>
+              <span class="team-card-val team-card-email">${esc(m.email)}</span>
+            </div>
+            <div class="team-card-row">
+              <span class="team-card-label">ROLE</span>
+              <span class="team-card-val">${roleBadge(m.role)}</span>
+            </div>
+            <div class="team-card-row">
+              <span class="team-card-label">STATUS</span>
+              <span class="team-card-val">${statusBadge(m.status)}</span>
+            </div>
+            <div class="team-card-row">
+              <span class="team-card-label">JOINED</span>
+              <span class="team-card-val" style="font-size:12px;color:var(--text-secondary);">
                 ${m.joinedAt ? new Date(m.joinedAt).toLocaleDateString() : m.status === 'invited' ? '⏳ Pending' : '—'}
-              </td>
-              <td>
-                <div style="display:flex;gap:6px;">
-                  ${m.status === 'invited' ? `
-                    <button class="btn-small" style="background:var(--indigo-50);color:var(--indigo-700);border:1px solid var(--indigo-200);"
-                      onclick="resendInvite('${m._id}', '${esc(m.name)}')">
-                      🔄 Resend
-                    </button>` : ''}
-                  <button class="btn-small" style="background:var(--danger-light);color:var(--danger-text);border:1px solid #fca5a5;"
-                    onclick="removeMember('${m._id}', '${esc(m.name)}')">
-                    🗑 Remove
-                  </button>
-                </div>
-              </td>
-            </tr>`).join('')}
-        </tbody>
-      </table>`;
+              </span>
+            </div>
+            <div class="team-card-actions">
+              ${m.status === 'invited' ? `
+                <button class="btn-small" style="background:var(--indigo-50);color:var(--indigo-700);border:1px solid var(--indigo-200);"
+                  onclick="resendInvite('${m._id}', '${esc(m.name)}')">
+                  🔄 Resend Invite
+                </button>` : ''}
+              <button class="btn-small" style="background:var(--danger-light);color:var(--danger-text);border:1px solid #fca5a5;"
+                onclick="removeMember('${m._id}', '${esc(m.name)}')">
+                🗑 Remove
+              </button>
+            </div>
+          </div>`).join('')}
+      </div>`;
   } catch (err) {
     container.innerHTML = `<p class="empty">Error loading team: ${esc(err.message)}</p>`;
   }
