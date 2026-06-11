@@ -90,12 +90,32 @@ const htmlToPlainText = (html) => {
 };
 
 const extractBody = (parsed) => {
-  if (parsed.text && parsed.text.trim()) return parsed.text.trim();
-  if (parsed.html) {
-    const plain = htmlToPlainText(parsed.html);
-    if (plain) return plain;
+  let text = '';
+  if (parsed.text && parsed.text.trim()) {
+    text = parsed.text.trim();
+  } else if (parsed.html) {
+    text = htmlToPlainText(parsed.html);
   }
-  return '(No message body)';
+  if (!text) return '(No message body)';
+
+  // Strip quoted reply history — everything after common quote markers
+  const quoteMarkers = [
+    /^>.*$/m,                                          // > quoted lines
+    /^On .+wrote:$/m,                                  // On Thu, Jun 11... wrote:
+    /^-{3,}.*original message.*-{3,}$/im,              // --- Original Message ---
+    /^From:.*$/m,                                      // From: someone
+    /^_{3,}$/m,                                        // ___ separator
+    /^Ticket:.*Reply to this email.*$/im,              // our own footer
+  ];
+
+  for (const marker of quoteMarkers) {
+    const match = text.search(marker);
+    if (match > 0) {
+      text = text.substring(0, match).trim();
+    }
+  }
+
+  return text || '(No message body)';
 };
 
 const findOrCreateCustomer = async (email, name = 'Unknown') => {
