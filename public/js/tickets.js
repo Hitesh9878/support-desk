@@ -258,28 +258,30 @@ function displayTickets(tickets) {
     const assignee = esc(t.assignedAgent?.name || 'Unassigned');
     const customer = esc(t.customer?.name || 'Unknown');
     const subject  = esc(t.subject || '—');
+    const statusSlug = t.status;
+    const prioritySlug = t.priority;
     const statusLabel   = t.status.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
     const priorityLabel = t.priority.charAt(0).toUpperCase() + t.priority.slice(1);
     return `<tr class="ticket-card-row" onclick="openTicketDetail('${t._id}')">
       <td colspan="8" style="padding:0;border-bottom:1px solid var(--border-light);">
         <div class="tcard">
           <div class="tcard-top">
-            <div class="tcard-meta-item"><span class="tcard-meta-label">ASSIGNED TO</span><span class="tcard-meta-value">&nbsp;- ${assignee}</span></div>
-            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">CREATED</span><span class="tcard-meta-value">&nbsp;- ${dateStr}</span></div>
+            <div class="tcard-meta-item"><span class="tcard-meta-label">ASSIGNED TO&nbsp;-&nbsp;</span><span class="tcard-meta-value">${assignee}</span></div>
+            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">CREATED&nbsp;-&nbsp;</span><span class="tcard-meta-value">${dateStr}</span></div>
           </div>
           <div class="tcard-mid">
             <div class="tcard-meta-item"><span class="tcard-id">${esc(t.ticketNumber)}</span></div>
-            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">STATUS</span><span class="tcard-meta-value">&nbsp;- ${statusLabel}</span></div>
+            <div class="tcard-meta-item tcard-right"><span class="tcard-status-badge tcard-status-${statusSlug}">${statusLabel}</span></div>
           </div>
           <div class="tcard-sub">
-            <div class="tcard-meta-item"><span class="tcard-meta-label">SUBJECT</span><span class="tcard-meta-value tcard-subject">&nbsp;- ${subject}</span></div>
-            <div class="tcard-meta-item tcard-right"><span class="tcard-meta-label">PRIORITY</span><span class="tcard-meta-value">&nbsp;- ${priorityLabel}</span></div>
+            <div class="tcard-meta-item"><span class="tcard-meta-label">SUBJECT&nbsp;-&nbsp;</span><span class="tcard-meta-value tcard-subject">${subject}</span></div>
+            <div class="tcard-meta-item tcard-right"><span class="tcard-priority-badge tcard-priority-${prioritySlug}">${priorityLabel}</span></div>
           </div>
           <div class="tcard-bot">
-            <div class="tcard-meta-item"><span class="tcard-meta-label">CUSTOMER</span><span class="tcard-meta-value">&nbsp;- ${customer}</span></div>
+            <div class="tcard-meta-item"><span class="tcard-meta-label">CUSTOMER&nbsp;-&nbsp;</span><span class="tcard-meta-value">${customer}</span></div>
             <div class="tcard-actions">
-              <button class="tcard-btn tcard-btn-view" onclick="openTicketDetail('${t._id}');event.stopPropagation();">View</button>
-              ${currentUserRole === 'admin' ? `<button class="tcard-btn tcard-btn-delete" onclick="event.stopPropagation();deleteTicket('${t._id}','${t.ticketNumber}')">Delete</button>` : ''}
+              <button class="tcard-btn tcard-btn-view" onclick="openTicketDetail('${t._id}');event.stopPropagation();">👁 View</button>
+              ${currentUserRole === 'admin' ? `<button class="tcard-btn tcard-btn-delete" onclick="event.stopPropagation();deleteTicket('${t._id}','${t.ticketNumber}')">🗑 Delete</button>` : ''}
             </div>
           </div>
         </div>
