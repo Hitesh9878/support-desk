@@ -218,10 +218,8 @@ async function loadTickets() {
   const status   = document.getElementById('statusFilter')?.value;
   const priority = document.getElementById('priorityFilter')?.value;
   const search   = document.getElementById('searchFilter')?.value;
-  const filters  = { page: currentPage, limit: PER_PAGE, sort: '-createdAt' };
+  const filters  = { page: currentPage, limit: PER_PAGE };
   if (status)   filters.status   = status;
-  // Hide closed tickets by default — only show them when explicitly filtered
-  if (!status)  filters.excludeStatus = 'closed';
   if (priority) filters.priority = priority;
   if (search)   filters.search   = search;
   if (currentBin === 'mine' && currentUserId) filters.assignedAgent = currentUserId;
@@ -229,23 +227,35 @@ async function loadTickets() {
 
   try {
     const data = await ticketAPI.getAll(filters);
-    displayTickets(data.tickets);
+
+    // Sort newest first on the client side
+    let tickets = (data.tickets || []).slice().sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
+
+    // Hide closed tickets by default — only show them when user explicitly filters by "closed"
+    if (!status) {
+      tickets = tickets.filter(t => t.status !== 'closed');
+    }
+
+    displayTickets(tickets);
     displayPagination(data.totalPages);
     const el = document.getElementById('ticketCount');
-    if (el) el.textContent = `— ${data.total} ticket${data.total!==1?'s':''}`;
+    if (el) el.textContent = `— ${tickets.length} ticket${tickets.length!==1?'s':''}`;
   } catch(e) { console.error('loadTickets:', e.message); }
 }
 
 async function refreshTabCounts() {
   try {
     const [all, mine, unassigned] = await Promise.all([
-      ticketAPI.getAll({ limit:1, page:1, excludeStatus:'closed' }),
-      currentUserId ? ticketAPI.getAll({ limit:1, page:1, assignedAgent: currentUserId, excludeStatus:'closed' }) : {total:0},
-      ticketAPI.getAll({ limit:1, page:1, unassigned:'true', excludeStatus:'closed' })
+      ticketAPI.getAll({ limit: 200, page: 1 }),
+      currentUserId ? ticketAPI.getAll({ limit: 200, page: 1, assignedAgent: currentUserId }) : { tickets: [] },
+      ticketAPI.getAll({ limit: 200, page: 1, unassigned: 'true' })
     ]);
-    document.getElementById('count-all').textContent        = all.total       ?? 0;
-    document.getElementById('count-mine').textContent       = mine.total      ?? 0;
-    document.getElementById('count-unassigned').textContent = unassigned.total ?? 0;
+    const notClosed = t => t.status !== 'closed';
+    document.getElementById('count-all').textContent        = (all.tickets       || []).filter(notClosed).length;
+    document.getElementById('count-mine').textContent       = (mine.tickets      || []).filter(notClosed).length;
+    document.getElementById('count-unassigned').textContent = (unassigned.tickets|| []).filter(notClosed).length;
   } catch(e) {}
 }
 
