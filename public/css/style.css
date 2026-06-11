@@ -1532,3 +1532,567 @@ textarea.drag-over {
 body.compact .ticket-list-item{padding:9px 14px}
 body.compact .stat-card{padding:12px 14px}
 body.compact .setting-row{padding:9px 16px}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPREHENSIVE MOBILE RESPONSIVE OVERHAUL
+   Breakpoints: Mobile (320–767px) | Tablet (768–1024px) | Desktop (1025px+)
+   All existing desktop styles preserved — only additive responsive rules below.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Global mobile base fixes ──────────────────────────────────────────────── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+table {
+  border-collapse: collapse;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TABLET  768px – 1024px
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) and (max-width: 1024px) {
+
+  /* Sidebar: slightly narrower */
+  :root { --sidebar-w: 200px; }
+
+  /* Header: tighter padding */
+  .header { padding: 0 16px; }
+
+  /* Dashboard grid: compact */
+  .dashboard-grid { padding: 16px; gap: 16px; }
+
+  /* Stats dual: stay 2-col but with less gap */
+  .stats-dual { grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Stats grid: max 3 per row on tablet */
+  .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+  /* Table wrappers: slight margin */
+  .tickets-table-wrapper, .customers-table-wrapper { margin: 12px 16px; }
+
+  /* Filters: keep flex but allow wrap */
+  .filters-bar { padding: 10px 16px; }
+
+  /* Ticket detail: stack on narrow tablets */
+  .ticket-detail { grid-template-columns: 240px 1fr; height: calc(90vh - 52px); }
+
+  /* Profile layout: tighter */
+  .profile-layout { grid-template-columns: 260px 1fr; gap: 18px; padding: 18px 16px; }
+
+  /* Reports container */
+  .reports-container { padding: 16px; }
+
+  /* Modals: use most of viewport */
+  .modal-content { max-width: 680px; }
+
+  /* Settings: smaller sidebar */
+  .settings-layout { grid-template-columns: 190px 1fr; }
+  .settings-body { padding: 18px 22px; }
+
+  /* Ticket tabs: allow horizontal scroll */
+  .ticket-tabs { overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; padding: 0 16px; -webkit-overflow-scrolling: touch; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE  ≤ 767px  (overrides the partial rules already in the sheet)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 767px) {
+
+  /* ── Body / global ── */
+  body { font-size: 14px; }
+
+  /* ── Sidebar: off-canvas slide-in ── */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 200;
+    width: 240px;
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sidebar-overlay.active { display: block; }
+
+  /* ── Main content: full width ── */
+  .main-content { margin-left: 0; width: 100%; }
+
+  /* ── Header ── */
+  .header {
+    padding: 0 12px;
+    gap: 8px;
+    height: var(--header-h);
+  }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+  }
+  .header-left h1 {
+    font-size: 15px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .header-right { gap: 6px; flex-shrink: 0; }
+
+  /* Show hamburger */
+  .mobile-menu-btn { display: flex !important; align-items: center; justify-content: center; }
+
+  /* Hide button text labels to save space */
+  .header-right .btn .btn-text { display: none; }
+
+  /* Status selector: icon only on very small */
+  .status-selector .status-label { display: none; }
+
+  /* User button: icon only on mobile */
+  .user-btn .user-name-text { display: none; }
+  .user-btn { padding: 4px; }
+
+  /* Refresh / export / action buttons: icon + short label or icon only */
+  #refreshDashboardBtn, #refreshTicketsBtn, #refreshCustomersBtn, #refreshReportsBtn {
+    padding: 7px 10px;
+    font-size: 12px;
+  }
+
+  /* ── Dashboard grid ── */
+  .dashboard-grid { padding: 12px; gap: 14px; }
+
+  /* Dual stats: single column */
+  .stats-dual { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Stats grid: 2-column */
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .stat-card { padding: 14px 14px; gap: 10px; }
+  .stat-value { font-size: 22px; }
+  .stat-label { font-size: 10px; }
+  .stat-icon { font-size: 20px; }
+
+  /* Mini stats */
+  .mini-stats { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .mini-stat-value { font-size: 22px; }
+  .mini-stat-label { font-size: 10px; }
+  .mini-stat { padding: 6px 2px; }
+
+  /* Stat group */
+  .stat-group { padding: 14px 16px; }
+
+  /* Section header */
+  .section-header { flex-wrap: wrap; gap: 8px; }
+
+  /* ── Ticket tabs: horizontal scroll ── */
+  .ticket-tabs {
+    padding: 0 12px;
+    overflow-x: auto;
+    white-space: nowrap;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .ticket-tabs::-webkit-scrollbar { display: none; }
+  .ticket-tab { padding: 10px 12px; font-size: 12.5px; flex-shrink: 0; }
+
+  /* ── Filters bar ── */
+  .filters-bar {
+    flex-direction: column;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .filter-group { width: 100%; min-width: unset; }
+  .filter-group select,
+  .filter-group input,
+  .filters-bar input[type="text"] { width: 100%; font-size: 14px; }
+  .filters-bar .btn { width: 100%; justify-content: center; }
+
+  /* ── Tables: horizontal scroll ── */
+  .tickets-table-wrapper,
+  .customers-table-wrapper {
+    margin: 0 12px 12px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tickets-table { min-width: 620px; }
+  .customers-table { min-width: 640px; }
+  .report-table { min-width: 480px; }
+
+  /* Table font sizes */
+  .tickets-table th, .customers-table th, .report-table th { font-size: 10.5px; padding: 9px 12px; }
+  .tickets-table td, .customers-table td, .report-table td { font-size: 13px; padding: 10px 12px; }
+
+  /* ── Ticket row actions: stack if needed ── */
+  .ticket-row-actions { gap: 4px; }
+  .btn-view-ticket, .btn-delete-ticket, .btn-delete-row { padding: 4px 8px; font-size: 11px; }
+
+  /* ── Modals: bottom sheet style ── */
+  .modal { padding: 0; align-items: flex-end; }
+  .modal-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    max-height: 92vh;
+    position: relative;
+    bottom: 0;
+    animation: mobile-modal-up 0.25s ease;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @keyframes mobile-modal-up {
+    from { transform: translateY(40px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .modal-content.large {
+    max-width: 100% !important;
+    max-height: 95vh;
+  }
+  .confirm-modal { max-width: 100% !important; }
+  .modal-header { padding: 12px 16px; }
+  .modal-header h2 { font-size: 14px; }
+
+  /* Form groups inside modals */
+  .form-group { padding: 10px 16px; }
+  .form-group input,
+  .form-group select,
+  .form-group textarea { font-size: 16px; /* prevent iOS zoom */ }
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  .form-actions .btn, .confirm-actions .btn { width: 100%; justify-content: center; }
+  .confirm-body { padding: 16px; }
+  .confirm-actions { flex-direction: column; gap: 8px; }
+
+  /* ── Ticket detail modal: stacked ── */
+  .ticket-detail {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+  }
+  .ticket-info {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    max-height: 280px;
+    overflow-y: auto;
+  }
+  .conversation-panel { min-height: 320px; }
+
+  /* Conv tabs */
+  .conv-tabs { overflow-x: auto; white-space: nowrap; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+  .conv-tab { padding: 9px 12px; font-size: 12px; flex-shrink: 0; }
+
+  /* Reply area */
+  .reply-area { padding: 10px 12px; }
+  .reply-area textarea, #replyBody { font-size: 16px; min-height: 70px; }
+  .reply-footer, .message-options {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+  .reply-footer > div { flex-wrap: wrap; gap: 8px; }
+  .reply-footer .btn, #sendReplyBtn { width: 100%; justify-content: center; }
+
+  /* ── Pagination ── */
+  .pagination { padding: 12px; gap: 4px; flex-wrap: wrap; justify-content: center; }
+  .pagination button, .page-btn { min-width: 38px; height: 38px; font-size: 13px; }
+
+  /* ── Quick actions ── */
+  .quick-actions { padding: 12px 14px; }
+  .action-btn { padding: 11px 12px; font-size: 13px; }
+
+  /* ── Reports ── */
+  .reports-container { padding: 12px; gap: 14px; }
+  .chart-container { padding: 12px 14px; overflow-x: auto; }
+  .report-section h2 { padding: 12px 14px; font-size: 13px; }
+
+  /* Stats grid in reports */
+  .reports-container .stats-grid { grid-template-columns: repeat(2, 1fr); }
+
+  /* Report tables: scroll */
+  .chart-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Scope banner */
+  #reportScopeBanner { margin: 10px 12px 0; padding: 9px 14px; font-size: 12px; }
+
+  /* ── Profile layout: single column ── */
+  .profile-layout {
+    grid-template-columns: 1fr;
+    padding: 12px;
+    gap: 14px;
+  }
+  .profile-stats { grid-template-columns: repeat(3, 1fr); }
+  .profile-stat-val { font-size: 18px; }
+  .info-grid { grid-template-columns: 1fr; }
+  .info-field:nth-last-child(-n+2) { border-bottom: 1px solid var(--border-light); }
+  .info-field:last-child { border-bottom: none; }
+  .info-field { padding: 11px 14px; }
+  .info-field input, .info-field select, .info-field textarea { font-size: 16px; }
+  .edit-actions { padding: 12px 14px; }
+
+  /* ── Settings: horizontal top nav ── */
+  .settings-layout { grid-template-columns: 1fr; }
+  .settings-nav {
+    display: flex;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    position: relative !important;
+    top: auto !important;
+    height: auto !important;
+    padding: 0;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .settings-nav::-webkit-scrollbar { display: none; }
+  .settings-nav-label { display: none; }
+  .settings-nav-item {
+    padding: 10px 14px;
+    border-left: none;
+    border-bottom: 3px solid transparent;
+    font-size: 12.5px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .settings-nav-item.active {
+    border-bottom-color: var(--primary);
+    border-left-color: transparent;
+    background: transparent;
+  }
+  .settings-body { padding: 14px 14px; }
+
+  /* Setting rows */
+  .setting-row { padding: 14px 16px; gap: 10px; min-height: auto; }
+  .setting-control { width: 100%; }
+  .setting-control input,
+  .setting-control select { width: 100%; min-width: unset; font-size: 16px; }
+
+  /* ── Customers modal ── */
+  .customer-detail { padding: 14px 16px; }
+  .detail-row input,
+  .detail-row select,
+  .detail-row textarea { font-size: 16px; }
+
+  /* ── Auth pages: tighter ── */
+  .auth-page { padding: 16px; }
+  .auth-card { padding: 22px 16px; }
+  .auth-brand h1 { font-size: 22px; }
+
+  /* OTP digits: smaller on mobile */
+  .otp-digits { gap: 6px; }
+  .otp-digit { width: 40px; height: 48px; font-size: 20px; }
+
+  /* ── Attachment area ── */
+  .att-img-wrap, .att-img { max-width: 100%; }
+  .att-file-card { max-width: 100%; }
+  .compose-box textarea#replyBody { font-size: 16px; }
+  .attach-btn { padding: 7px 10px; font-size: 12px; }
+
+  /* ── Buttons: touch-friendly minimum tap size ── */
+  .btn { min-height: 36px; padding: 8px 14px; }
+  .btn-sm { min-height: 30px; padding: 5px 10px; }
+  .close-btn { width: 34px; height: 34px; }
+
+  /* ── Dropdown: make sure it doesn't overflow viewport ── */
+  .dropdown { right: 0; left: auto; min-width: 150px; }
+
+  /* ── Tickets page specific header buttons ── */
+  #autoAssignBtn, #newTicketBtn { font-size: 12px; padding: 7px 10px; }
+
+  /* Pending approvals / team sections */
+  #pendingApprovalsSection, #teamSection { overflow-x: hidden; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   SMALL MOBILE  ≤ 480px  (refinements on top of 767px rules)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  /* Header: minimal height */
+  .header { height: 50px; padding: 0 10px; }
+  .header-left h1 { font-size: 14px; }
+
+  /* Stats: single column */
+  .stats-grid { grid-template-columns: 1fr; }
+  .stats-dual { gap: 10px; }
+
+  /* Mini stats tighter */
+  .mini-stats { gap: 4px; }
+  .mini-stat-value { font-size: 20px; }
+  .mini-stat { padding: 5px 2px; }
+
+  /* Ticket tabs */
+  .ticket-tab { padding: 9px 10px; font-size: 12px; }
+
+  /* Tables: tighter margins */
+  .tickets-table-wrapper, .customers-table-wrapper { margin: 0 8px 10px; }
+
+  /* Reports stats: single col */
+  .reports-container .stats-grid { grid-template-columns: 1fr; }
+
+  /* Ticket info panel in modal */
+  .ticket-info { max-height: 240px; }
+
+  /* Dashboard padding */
+  .dashboard-grid { padding: 10px; gap: 10px; }
+  .reports-container { padding: 10px; }
+
+  /* Profile */
+  .profile-stat-val { font-size: 16px; }
+  .profile-name { font-size: 16px; }
+
+  /* Filters */
+  .filters-bar { padding: 8px 10px; }
+  .ticket-tabs { padding: 0 8px; }
+
+  /* Auth */
+  .auth-card { padding: 18px 14px; margin: 0; border-radius: var(--radius-xl); }
+  .auth-brand h1 { font-size: 20px; }
+  .otp-digit { width: 36px; height: 44px; font-size: 18px; }
+
+  /* Merge modal: full width selects */
+  #mergePrimarySelect { width: 100%; }
+  #mergeDuplicateRows select { width: 100%; }
+
+  /* Customer ticket items: stack */
+  .customer-ticket-item { flex-direction: column; align-items: flex-start; gap: 6px; }
+
+  /* Buttons in header: further condensed */
+  #refreshDashboardBtn, #refreshTicketsBtn, #refreshCustomersBtn, #refreshReportsBtn { padding: 6px 8px; font-size: 11px; }
+  #autoAssignBtn, #newTicketBtn { font-size: 11px; padding: 6px 8px; }
+  .btn-auto-assign { font-size: 12px; padding: 6px 10px; }
+
+  /* Bottom safe area for modals */
+  .modal-content { padding-bottom: env(safe-area-inset-bottom, 12px); }
+
+  /* Settings body padding */
+  .settings-body { padding: 10px; }
+
+  /* Profile layout padding */
+  .profile-layout { padding: 10px; gap: 10px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   VERY SMALL MOBILE  ≤ 360px  (e.g. older Android, narrow phones)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 360px) {
+  .header-left h1 { font-size: 13px; }
+  .mini-stat-value { font-size: 18px; }
+  .stat-value { font-size: 20px; }
+  .ticket-tab { padding: 8px 9px; font-size: 11.5px; }
+  .otp-digits { gap: 5px; }
+  .otp-digit { width: 34px; height: 42px; font-size: 16px; }
+  .auth-card { padding: 16px 12px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LARGE DESKTOP  ≥ 1440px  (ensure content doesn't stretch too wide)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 1440px) {
+  .dashboard-grid { padding: 24px 28px; }
+  .stats-grid { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+  .tickets-table-wrapper, .customers-table-wrapper { margin: 18px 28px; }
+  .filters-bar { padding: 10px 28px; }
+  .ticket-tabs { padding: 0 28px; }
+  .reports-container { padding: 24px 28px; }
+  .profile-layout { padding: 24px 28px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   UTILITY: prevent horizontal overflow globally
+   ══════════════════════════════════════════════════════════════════════════ */
+.main-content {
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+/* Tables inside chart containers always get overflow scroll */
+.chart-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ticket list items: prevent text overflow */
+.ticket-subject {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+}
+@media (max-width: 767px) {
+  .ticket-subject { max-width: 180px; }
+}
+@media (max-width: 480px) {
+  .ticket-subject { max-width: 140px; }
+}
+
+/* Message bubbles: don't overflow on mobile */
+.msg-bubble, .message {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+.msg-body, .message-body {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Attachment file names: truncate gracefully */
+.att-file-name {
+  max-width: 180px;
+}
+@media (max-width: 480px) {
+  .att-file-name { max-width: 130px; }
+}
+
+/* Images in messages: never overflow */
+.att-img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Pending chip names: constrain on mobile */
+@media (max-width: 767px) {
+  .att-chip-name { max-width: 90px; }
+  .att-pending-chip { max-width: 200px; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TOUCH ENHANCEMENTS (all touch devices)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+
+  /* Larger tap targets for interactive elements */
+  .nav-item { padding: 11px 16px; min-height: 44px; }
+  .btn { min-height: 44px; }
+  .btn-sm { min-height: 36px; }
+  .ticket-tab { min-height: 44px; padding: 10px 14px; }
+  .dropdown a { padding: 12px 16px; min-height: 44px; display: flex; align-items: center; }
+  .close-btn { width: 40px; height: 40px; }
+  .page-btn, .pagination button { min-width: 44px; height: 44px; }
+  .action-btn { min-height: 48px; }
+  .settings-nav-item { min-height: 44px; }
+  .toggle { width: 44px; height: 26px; }
+  .toggle-slider::after { width: 20px; height: 20px; }
+  .toggle input:checked + .toggle-slider::after { transform: translateX(18px); }
+
+  /* Disable hover transforms that feel wrong on touch */
+  .btn-primary:hover { transform: none; }
+  .btn-danger:hover  { transform: none; }
+  .stat-card:hover   { transform: none; }
+  .action-btn:hover  { transform: none; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PRINT (basic — keeps tables readable)
+   ══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  .sidebar, .header, .mobile-menu-btn, .sidebar-overlay { display: none !important; }
+  .main-content { margin-left: 0; }
+  .tickets-table, .customers-table, .report-table { min-width: unset; }
+  .tickets-table-wrapper, .customers-table-wrapper { overflow: visible; border: none; box-shadow: none; }
+}
