@@ -14,6 +14,7 @@ router.put('/:id',            auth, authorize(['admin','agent']),ticketControlle
 router.put('/:id/close',      auth, authorize(['admin','agent']),ticketController.closeTicket);
 router.delete('/:id',         auth, authorize(['admin']),        ticketController.deleteTicket);
 
+router.post('/merge',                     auth, authorize(['admin','agent']), ticketController.mergeTickets);
 router.post('/:ticketId/messages',       auth, messageController.addMessage);
 router.get('/:ticketId/messages',        auth, messageController.getMessages);
 router.post('/:ticketId/customer-reply', messageController.addCustomerReply);

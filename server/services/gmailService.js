@@ -111,13 +111,20 @@ const findOrCreateCustomer = async (email, name = 'Unknown') => {
 // ─── Process one email ────────────────────────────────────────────────────────
 const handleIncomingEmail = async (emailData) => {
   try {
-    const { from, subject, body, messageId, attachments = [] } = emailData;
+    const { from, subject, body, messageId, attachments = [], references = [], inReplyTo = '' } = emailData;
     const safeBody  = (body && body.trim()) ? body.trim() : '(No message body)';
     const fromEmail = parseEmailAddress(from);
     const fromName  = parseSenderName(from);
 
     if (!fromEmail) {
       console.warn('[Gmail] Cannot parse sender, skipping.');
+      return null;
+    }
+
+    // ── Skip emails sent FROM the support account itself (avoid self-loop) ────
+    const supportEmail = (process.env.GMAIL_USER || '').toLowerCase();
+    if (fromEmail.toLowerCase() === supportEmail) {
+      console.log('[Gmail] Skipping — email is from support account itself:', fromEmail);
       return null;
     }
 
@@ -140,11 +147,43 @@ const handleIncomingEmail = async (emailData) => {
     // Mark immediately to prevent race conditions
     if (messageId) processedThisRun.add(messageId);
 
-    // ── Existing ticket (reply to same thread)? ───────────────────────────────
-    const ticketRef = subject.match(/\[?(TM-\d+)\]?/i);
+    // ── Thread matching: 3 strategies in order of confidence ─────────────────
+    // 1. Subject contains ticket number  e.g. [TM-1042] or TM-1042
+    // 2. References / In-Reply-To header matches a gmailMessageId in DB
+    // 3. Same customer + open ticket with matching base subject
     let ticket = null;
+
+    const ticketRef = subject.match(/\[?(TM-\d+)\]?/i);
     if (ticketRef) {
       ticket = await Ticket.findOne({ ticketNumber: ticketRef[1].toUpperCase() });
+    }
+
+    if (!ticket && (references.length || inReplyTo)) {
+      const refIds = Array.isArray(references) ? [...references] : [];
+      if (inReplyTo) refIds.push(inReplyTo);
+      if (refIds.length) {
+        const refMsg = await Message.findOne({ gmailMessageId: { $in: refIds } });
+        if (refMsg) {
+          ticket = await Ticket.findById(refMsg.ticket);
+        }
+      }
+    }
+
+    if (!ticket) {
+      const baseSubject = subject.replace(/^(re|fwd?):\s*/i, '').replace(/\[?TM-\d+\]?\s*/gi, '').trim().toLowerCase();
+      if (baseSubject) {
+        const customer = await Customer.findOne({ email: fromEmail.toLowerCase() });
+        if (customer) {
+          const candidate = await Ticket.findOne({
+            customer: customer._id,
+            status: { $in: ['open', 'in-progress', 'waiting-customer'] }
+          }).sort({ createdAt: -1 });
+          if (candidate) {
+            const tBase = candidate.subject.replace(/\[?TM-\d+\]?\s*/gi, '').trim().toLowerCase();
+            if (tBase === baseSubject) ticket = candidate;
+          }
+        }
+      }
     }
 
     if (ticket) {
@@ -261,7 +300,7 @@ const handleIncomingEmail = async (emailData) => {
   }
 };
 
-// ─── IMAP fetch ───────────────────────────────────────────────────────────────
+// ─── IMAP fetch (INBOX) ───────────────────────────────────────────────────────
 // Strategy: search UNSEEN + SINCE server-start-date.
 // markSeen: false — Gmail read/unread flag is never touched.
 // DB dedup + in-memory set prevent duplicate processing across polls.
@@ -339,12 +378,21 @@ const fetchNewEmails = () => new Promise((resolve, reject) => {
           }
         }
 
+        // Parse References header into array of message-ids
+        const referencesRaw = parsed.headers?.get('references') || '';
+        const references = referencesRaw
+          ? referencesRaw.split(/\s+/).map(s => s.trim()).filter(Boolean)
+          : [];
+        const inReplyTo = parsed.inReplyTo || '';
+
         results.push({
           from:        parsed.from?.text || '',
           subject:     parsed.subject || '(No Subject)',
           body:        extractBody(parsed),
           messageId:   parsed.messageId,
-          attachments: savedAttachments
+          attachments: savedAttachments,
+          references,
+          inReplyTo
         });
       } catch (e) {
         console.error('[Gmail] Parse error:', e.message);
@@ -361,15 +409,203 @@ const fetchNewEmails = () => new Promise((resolve, reject) => {
   imap.connect();
 });
 
+// ─── IMAP fetch (Sent Mail) ───────────────────────────────────────────────────
+// Fetches recent emails FROM the support address in [Gmail]/Sent Mail.
+// This captures replies sent directly from the Gmail UI (not through the dashboard).
+// These are stored as agent messages on the matching ticket.
+const fetchSentEmails = () => new Promise((resolve, reject) => {
+  const imap = new Imap({
+    user:       process.env.GMAIL_USER,
+    password:   process.env.GMAIL_APP_PASSWORD,
+    host:       'imap.gmail.com',
+    port:       993,
+    tls:        true,
+    tlsOptions: { rejectUnauthorized: false }
+  });
+
+  const rawEmails = [];
+
+  imap.once('ready', () => {
+    // Gmail's sent folder is [Gmail]/Sent Mail
+    imap.openBox('[Gmail]/Sent Mail', true, (err) => {
+      if (err) {
+        console.log('[Gmail] Could not open Sent Mail folder (may not exist):', err.message);
+        imap.end();
+        return resolve([]);
+      }
+
+      const months   = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const d        = SERVER_START_DATE;
+      const sinceStr = `${d.getDate()}-${months[d.getMonth()]}-${d.getFullYear()}`;
+
+      imap.search([['SINCE', sinceStr]], (err, uids) => {
+        if (err) { imap.end(); return resolve([]); }
+        if (!uids || !uids.length) {
+          imap.end();
+          return resolve([]);
+        }
+        console.log(`[Gmail] Found ${uids.length} sent email(s) since server start…`);
+
+        const fetch = imap.fetch(uids, { bodies: '', markSeen: false });
+
+        fetch.on('message', (msg) => {
+          let raw = '';
+          msg.on('body', (stream) => { stream.on('data', c => { raw += c.toString('utf8'); }); });
+          msg.once('end', () => { rawEmails.push(raw); });
+        });
+        fetch.once('error', e => console.error('[Gmail] Sent fetch error:', e.message));
+        fetch.once('end',   () => { imap.end(); });
+      });
+    });
+  });
+
+  imap.once('end', async () => {
+    const results = [];
+    for (const raw of rawEmails) {
+      try {
+        const parsed = await simpleParser(raw);
+        const fromEmail = parseEmailAddress(parsed.from?.text || '');
+        const supportEmail = (process.env.GMAIL_USER || '').toLowerCase();
+
+        // Only include emails actually sent FROM the support account
+        if (fromEmail.toLowerCase() !== supportEmail) continue;
+
+        const referencesRaw = parsed.headers?.get('references') || '';
+        const references = referencesRaw
+          ? referencesRaw.split(/\s+/).map(s => s.trim()).filter(Boolean)
+          : [];
+        const inReplyTo = parsed.inReplyTo || '';
+
+        results.push({
+          from:        parsed.from?.text || '',
+          to:          parsed.to?.text || '',
+          subject:     parsed.subject || '(No Subject)',
+          body:        extractBody(parsed),
+          messageId:   parsed.messageId,
+          attachments: [],
+          references,
+          inReplyTo,
+          isSentBySupport: true
+        });
+      } catch (e) {
+        console.error('[Gmail] Sent parse error:', e.message);
+      }
+    }
+    resolve(results);
+  });
+
+  imap.once('error', (err) => {
+    console.error('[Gmail] Sent IMAP error:', err.message);
+    resolve([]); // Non-fatal — don't crash the whole poll
+  });
+
+  imap.connect();
+});
+
+// ─── Process one sent email (agent reply via Gmail UI) ────────────────────────
+const handleSentEmail = async (emailData) => {
+  try {
+    const { subject, body, messageId, to, references = [], inReplyTo = '' } = emailData;
+    if (!messageId) return null;
+
+    // Dedup
+    if (processedThisRun.has('sent:' + messageId)) return null;
+    const existing = await Message.findOne({ gmailMessageId: messageId });
+    if (existing) { processedThisRun.add('sent:' + messageId); return null; }
+    processedThisRun.add('sent:' + messageId);
+
+    // Find the ticket this sent email belongs to
+    let ticket = null;
+
+    // 1. Subject has ticket number
+    const ticketRef = subject.match(/\[?(TM-\d+)\]?/i);
+    if (ticketRef) {
+      ticket = await Ticket.findOne({ ticketNumber: ticketRef[1].toUpperCase() });
+    }
+
+    // 2. References / In-Reply-To
+    if (!ticket && (references.length || inReplyTo)) {
+      const refIds = Array.isArray(references) ? [...references] : [];
+      if (inReplyTo) refIds.push(inReplyTo);
+      if (refIds.length) {
+        const refMsg = await Message.findOne({ gmailMessageId: { $in: refIds } });
+        if (refMsg) ticket = await Ticket.findById(refMsg.ticket);
+      }
+    }
+
+    // 3. Match by recipient email (find customer → open ticket)
+    if (!ticket && to) {
+      const toEmail = parseEmailAddress(to).toLowerCase();
+      const customer = await Customer.findOne({ email: toEmail });
+      if (customer) {
+        ticket = await Ticket.findOne({
+          customer: customer._id,
+          status: { $in: ['open', 'in-progress', 'waiting-customer'] }
+        }).sort({ updatedAt: -1 });
+      }
+    }
+
+    if (!ticket) {
+      console.log('[Gmail] Sent email could not be matched to a ticket, skipping:', subject);
+      return null;
+    }
+
+    const safeBody = (body && body.trim()) ? body.trim() : '(No message body)';
+    const message = new Message({
+      ticket:         ticket._id,
+      senderType:     'agent',
+      body:           safeBody,
+      subject,
+      toEmail:        parseEmailAddress(to),
+      fromEmail:      process.env.GMAIL_USER,
+      gmailMessageId: messageId
+    });
+    await message.save();
+
+    ticket.updatedAt = new Date();
+    if (!ticket.firstResponseTime) ticket.firstResponseTime = new Date();
+    await ticket.save();
+
+    await ActivityLog.create({
+      ticket:      ticket._id,
+      user:        null,
+      action:      'email_reply_sent',
+      actionType:  'comment',
+      description: `Email reply sent via Gmail (direct) to ${parseEmailAddress(to)}`
+    });
+
+    if (ioInstance) {
+      const pop = await Message.findById(message._id).populate('sender', 'name avatar');
+      ioInstance.emit('message:added', { ticketId: ticket._id.toString(), message: pop });
+    }
+
+    console.log(`[Gmail] ✅ Stored direct-Gmail reply in ticket ${ticket.ticketNumber}`);
+    return { ticket, message };
+  } catch (err) {
+    console.error('[Gmail] handleSentEmail error:', err.message);
+    return null;
+  }
+};
+
 const pollGmailForNewEmails = async () => {
   try {
+    // Poll INBOX for customer emails
     const emails = await fetchNewEmails();
     let processed = 0;
     for (const email of emails) {
       const result = await handleIncomingEmail(email);
       if (result) processed++;
     }
-    if (processed > 0) console.log(`[Gmail] Created/updated ${processed} ticket(s).`);
+    if (processed > 0) console.log(`[Gmail] Created/updated ${processed} ticket(s) from inbox.`);
+
+    // Poll Sent Mail for direct agent replies from Gmail UI
+    const sentEmails = await fetchSentEmails();
+    let sentProcessed = 0;
+    for (const email of sentEmails) {
+      const result = await handleSentEmail(email);
+      if (result) sentProcessed++;
+    }
+    if (sentProcessed > 0) console.log(`[Gmail] Stored ${sentProcessed} direct Gmail reply/replies in tickets.`);
   } catch (err) {
     console.error('[Gmail] Poll error:', err.message);
   }

@@ -27,6 +27,9 @@ const TicketSchema = new mongoose.Schema({
   // Metadata
   channel: { type: String, enum: ['email', 'web', 'phone', 'chat'], default: 'email' },
   gmailMessageId: { type: String }, // For Gmail integration
+  gmailThreadId:  { type: String }, // Gmail thread ID for grouping replies
+  isMerged:       { type: Boolean, default: false }, // true if this ticket was merged into another
+  mergedInto:     { type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }, // primary ticket if merged
   linkedTickets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ticket' }]
 });
 

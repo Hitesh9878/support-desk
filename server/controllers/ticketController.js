@@ -337,6 +337,90 @@ exports.getReports = async (req, res) => {
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
+// ─── Merge tickets ─────────────────────────────────────────────────────────────
+// Merges up to 3 duplicate tickets INTO a primary ticket.
+// All messages and activity logs from duplicates are re-parented to primary.
+// Duplicates are then closed with a note referencing the primary.
+exports.mergeTickets = async (req, res) => {
+  try {
+    const { primaryTicketId, duplicateTicketIds } = req.body;
+
+    if (!primaryTicketId) return res.status(400).json({ message: 'primaryTicketId is required' });
+    if (!Array.isArray(duplicateTicketIds) || duplicateTicketIds.length === 0)
+      return res.status(400).json({ message: 'duplicateTicketIds must be a non-empty array' });
+    if (duplicateTicketIds.length > 3)
+      return res.status(400).json({ message: 'You can merge at most 3 duplicate tickets at once' });
+    if (duplicateTicketIds.includes(primaryTicketId))
+      return res.status(400).json({ message: 'Primary ticket cannot also be a duplicate' });
+
+    const primary = await Ticket.findById(primaryTicketId);
+    if (!primary) return res.status(404).json({ message: 'Primary ticket not found' });
+
+    const duplicates = await Ticket.find({ _id: { $in: duplicateTicketIds } });
+    if (duplicates.length !== duplicateTicketIds.length)
+      return res.status(404).json({ message: 'One or more duplicate tickets not found' });
+
+    for (const dup of duplicates) {
+      // Re-parent all messages from duplicate to primary
+      await Message.updateMany({ ticket: dup._id }, { $set: { ticket: primary._id } });
+
+      // Re-parent all activity logs
+      await ActivityLog.updateMany({ ticket: dup._id }, { $set: { ticket: primary._id } });
+
+      // Add a system message on primary noting the merge
+      await Message.create({
+        ticket: primary._id,
+        senderType: 'agent',
+        sender: req.user.userId,
+        body: `[Merged] Ticket ${dup.ticketNumber} was merged into this ticket.`,
+        isInternalNote: true,
+        gmailMessageId: `merge-${dup._id}-${Date.now()}`
+      });
+
+      // Close the duplicate with a note
+      dup.status = 'closed';
+      dup.resolvedAt = new Date();
+      dup.updatedAt = new Date();
+      dup.isMerged = true;
+      dup.mergedInto = primary._id;
+      await dup.save();
+
+      await ActivityLog.create({
+        ticket: dup._id,
+        user: req.user.userId,
+        action: 'merged',
+        actionType: 'status_change',
+        description: `Merged into ${primary.ticketNumber}`
+      });
+    }
+
+    // Add merged ticket IDs to primary's linkedTickets
+    const existingLinked = primary.linkedTickets.map(id => id.toString());
+    const newLinked = duplicateTicketIds.filter(id => !existingLinked.includes(id));
+    primary.linkedTickets = [...primary.linkedTickets, ...newLinked];
+    primary.updatedAt = new Date();
+    await primary.save();
+
+    await ActivityLog.create({
+      ticket: primary._id,
+      user: req.user.userId,
+      action: 'tickets_merged',
+      actionType: 'update',
+      description: `Merged ${duplicates.map(d => d.ticketNumber).join(', ')} into this ticket`
+    });
+
+    const populated = await Ticket.findById(primary._id)
+      .populate('customer', 'name email')
+      .populate('assignedAgent', 'name avatar status email')
+      .populate('linkedTickets', 'ticketNumber subject status');
+
+    const io = req.app.get('io');
+    if (io) io.emit('ticket:updated', populated);
+
+    res.json({ message: `Merged ${duplicates.length} ticket(s) into ${primary.ticketNumber}`, ticket: populated });
+  } catch (err) { res.status(500).json({ message: err.message }); }
+};
+
 // ─── Dashboard stats (role-scoped) ────────────────────────────────────────────
 exports.getDashboardStats = async (req, res) => {
   try {
